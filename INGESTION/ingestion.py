@@ -52,10 +52,10 @@ def creating_index_body(index_name, dimension=1024):
         },  
         "mappings": {
             "properties": {
-                "Product Name": {"type": "text"},
-                "Product Description": {"type": "text", "analyzer": "analyzer_shingle"},
-                "Product Price": {"type": "float"},
-                "Image": {"type": "text"},
+                "name": {"type": "text"},
+                "description": {"type": "text", "analyzer": "analyzer_shingle"},
+                "price": {"type": "text"},
+                "imageUrl": {"type": "text"},
                 "vector_en": {
                     "type": "knn_vector",
                     "dimension": dimension,
@@ -104,7 +104,7 @@ def get_titan_embedding(text: str) -> list:
             print(f"Empty embedding received")
             return None
             
-        print(f"Got embedding with {len(embedding)} dimensions")
+        #print(f"Got embedding with {len(embedding)} dimensions")
         return embedding
         
     except Exception as e:
@@ -116,18 +116,18 @@ def ingestion_data_opensearch(index_name, dataframe):
     # Index the documents with semantic embeddings and raw text
     for i in tqdm(range(len(dataframe)), desc="Ingesting products", unit="item"):
         # Generate embeddings
-        Product_Name = dataframe.iloc[i]['Product Name']
-        Product_Description = dataframe.iloc[i]['Product Description']
-        Product_Price = dataframe.iloc[i]['Product Price']
-        Image = dataframe.iloc[i]['Image']
+        Product_Name = dataframe.iloc[i]['name']
+        Product_Description = dataframe.iloc[i]['description']
+        Product_Price = dataframe.iloc[i]['price']
+        Image = dataframe.iloc[i]['imageUrl']
         embedding = get_titan_embedding(Product_Description)
 
         # Index document with both raw text and embeddings
         res = client.index(index=index_name, id=i, body={
-            "Product Name": Product_Name,
-            "Product Description": Product_Description,
-            "Product Price": Product_Price,
-            "Image": Image,
+            "name": Product_Name,
+            "description": Product_Description,
+            "price": Product_Price,
+            "imageUrl": Image,
             "vector_en": embedding 
         })
         # Optional: You can keep or remove this line depending on how verbose you want the output
@@ -140,7 +140,7 @@ def fuzzy_search(index_name, search_term):
     fuzzy_query = {
         "query": {
             "fuzzy": {
-                "Product Description": {  # Changed from en_character to Product Description
+                "description": {  # Changed from en_character to Product Description
                     "value": search_term,
                     "fuzziness": "AUTO"  # You can adjust the fuzziness level
                 }
@@ -151,9 +151,9 @@ def fuzzy_search(index_name, search_term):
     res = client.search(index=index_name, body=fuzzy_query)
     print(f"Got {res['hits']['total']['value']} Hits:")
     for hit in res['hits']['hits']:
-        print(f"Product: {hit['_source']['Product Name']}")
-        print(f"Description: {hit['_source']['Product Description']}")
-        print(f"Price: {hit['_source']['Product Price']}")
+        print(f"Product: {hit['_source']['name']}")
+        print(f"Description: {hit['_source']['description']}")
+        print(f"Price: {hit['_source']['price']}")
         print("---")
 
 def semantic_search(search_term, top_k=3, index_name="product-index"):
@@ -192,29 +192,29 @@ def semantic_search(search_term, top_k=3, index_name="product-index"):
     
     for hit in semantic_resp['hits']['hits']:
         print("CURRENT SCORE: ", hit['_score'])
-        if hit['_score'] > 0.70:  # You can adjust this threshold as needed
-            results_names[f"product{i}"] = hit['_source']['Product Name']
-            results_descriptions[f"description{i}"] = hit['_source']['Product Description']
-            results_prices[f"price{i}"] = hit['_source']['Product Price']
-            results_images[f"image{i}"] = hit['_source']['Image']
+        if hit['_score'] > 0:  # You can adjust this threshold as needed
+            results_names[f"product{i}"] = hit['_source']['name']
+            results_descriptions[f"description{i}"] = hit['_source']['description']
+            results_prices[f"price{i}"] = hit['_source']['price']
+            results_images[f"image{i}"] = hit['_source']['imageUrl']
             i += 1
 
     return (results_names, results_descriptions, results_prices, results_images)
 
 if __name__ == "__main__":
     index_name = "product-index"
-    creating_index_body(index_name)
+    #creating_index_body(index_name)
     # Example DataFrame for testing
-    df = pd.read_csv("../data.csv")
-    ingestion_data_opensearch(index_name, df)
-    # results = semantic_search("great product", top_k=3, index_name=index_name)
-    # print("Search Results:")
-    # for i in range(1, len(results[0]) + 1):
-    #     print(f"Input {i}: great product")
-    #     print(f"Product {i}: {results[0][f'product{i}']}")
-    #     print(f"Description {i}: {results[1][f'description{i}']}")
-    #     print(f"Price {i}: {results[2][f'price{i}']}")
-    #     print(f"Image {i}: {results[3][f'image{i}']}")
-    #     print("---")
+    #df = pd.read_csv("../data.csv")
+    #ingestion_data_opensearch(index_name, df)
+    results = semantic_search("great productThe image shows a woman wearing a gray button-down dress or shirtdress. The dress has long sleeves and a collar, and is cinched at the waist with a belt. The woman is standing in what appears to be an office or workspace setting, with shelves or cabinets visible in the background. The overall style of the dress and setting suggests a professional or formal work environment.", top_k=3, index_name=index_name)
+    print("Search Results:")
+    for i in range(1, len(results[0]) + 1):
+        print(f"Input {i}")
+        print(f"Product {i}: {results[0][f'product{i}']}")
+        print(f"Description {i}: {results[1][f'description{i}']}")
+        print(f"Price {i}: {results[2][f'price{i}']}")
+        print(f"Image {i}: {results[3][f'image{i}']}")
+        print("---")
         
         
