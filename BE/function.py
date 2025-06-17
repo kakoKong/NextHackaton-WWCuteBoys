@@ -6,6 +6,11 @@ from botocore.exceptions import ClientError, NoCredentialsError
 import logging
 from dotenv import load_dotenv
 import json
+from pydantic import BaseModel, Field
+from typing import List, Optional
+
+class ProductSearch(BaseModel):
+    response: List[str] = Field(description="List of simple product search queries")
 
 load_dotenv()
 
@@ -102,50 +107,88 @@ async def chat_with_bedrock(messages: List[Dict[str, str]]) -> Dict[str, Any]:
     if bedrock_client is None:
         raise Exception("Bedrock client not initialized. Please check AWS credentials.")
     
-    try:
-        # Convert messages to Bedrock converse format
-        converse_messages = []
-        system_prompts = []
-        
-        for msg in messages:
-            if msg["role"] == "system":
-                system_prompts.append({"text": msg["content"]})
-            else:
-                converse_messages.append({
-                    "role": msg["role"],
-                    "content": [{"text": msg["content"]}]
-                })
-        
-        # Prepare request
-        request_params = {
-            "modelId": model_id,
-            "messages": converse_messages,
-            "inferenceConfig": {
-                "maxTokens": 2048,
-                "temperature": 0.1,
-                "topP": 0.9
-            }
+    # Convert messages to Bedrock converse format
+    converse_messages = []
+    system_prompts = []
+    
+    for msg in messages:
+        if msg["role"] == "system":
+            system_prompts.append({"text": msg["content"]})
+        else:
+            converse_messages.append({
+                "role": msg["role"],
+                "content": [{"text": msg["content"]}]
+            })
+    
+    # Prepare request
+    request_params = {
+        "modelId": model_id,
+        "messages": converse_messages,
+        "inferenceConfig": {
+            "maxTokens": 2048,
+            "temperature": 0.1,
+            "topP": 0.9
         }
-        
-        # Add system prompts if any
-        if system_prompts:
-            request_params["system"] = system_prompts
-        
-        logger.info(f"Calling Bedrock with model: {model_id}")
-        
-        # Call Bedrock converse API
-        response = bedrock_client.converse(**request_params)
-        
-        # Extract response text
-        response_text = response['output']['message']['content'][0]['text']
-        
-        logger.info(f"Bedrock response received: {response_text[:100]}...")
+    }
+    
+    # Add system prompts if any
+    if system_prompts:
+        request_params["system"] = system_prompts
+    
+    logger.info(f"Calling Bedrock with model: {model_id}")
+    
+    # Call Bedrock converse API
+    response = bedrock_client.converse(**request_params)
+    
+    # Extract response text
+    response_text = response['output']['message']['content'][0]['text']
+    
+    logger.info(f"Bedrock response received: {response_text[:100]}...")
+    
+    # Return in OpenAI-compatible format
+    return {
+        "choices": [{
+            "message": {
+                "content": response_text
+            }
+        }]
+    }
+async def function_calling_with_bedrock(messages: List[Dict[str, str]]) -> Dict[str, Any]:
+    """
+    Use Bedrock's converse API for chat completion
+    """
+    product_search_tool = convert_pydantic_to_bedrock_tool(ProductSearch)
+    if bedrock_client is None:
+        raise Exception("Bedrock client not initialized. Please check AWS credentials.")
+    
+    try:
+        tools = [product_search_tool]
+
+        response = bedrock_client.converse(
+            modelId="anthropic.claude-3-haiku-20240307-v1:0",
+            # system=system_prompt,  # System instructions go here
+            messages=messages,
+            inferenceConfig={
+                'maxTokens': 4096,
+                'temperature': 0,
+                'topP': 1,
+            },
+            toolConfig={
+                "tools": tools,
+                "toolChoice": {
+                    "tool": {"name": "ProductSearch"}  # Fixed: should match your actual tool name
+                }
+            },
+        )
+
+        output = response['output']['message']['content'][0]['toolUse']['input']
+        print(output)
         
         # Return in OpenAI-compatible format
         return {
             "choices": [{
                 "message": {
-                    "content": response_text
+                    "content": output
                 }
             }]
         }
@@ -222,6 +265,7 @@ async def image_to_text(model_id,
     return response['output']['message']['content'][0]['text']
 
 
+
 def mock_semantic_search(query: str) -> Dict[str, str]:
     """
     Mock semantic search - returns fixed product data
@@ -263,6 +307,38 @@ def mock_semantic_search(query: str) -> Dict[str, str]:
     else:
         # Default to first product
         return mock_products[0]
+
+from typing import Optional, Type, Dict, Any
+from pydantic import BaseModel
+
+def convert_pydantic_to_bedrock_tool(
+    model: Type[BaseModel],
+    description: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Converts a Pydantic model to a tool description for the Amazon Bedrock Converse API.
+    
+    Args:
+        model: The Pydantic model class to convert
+        description: Optional description of the tool's purpose
+
+    Returns:
+        Dict containing the Bedrock tool specification        
+    """
+    # Validate input model
+    if not isinstance(model, type) or not issubclass(model, BaseModel):
+        raise ValueError("Input must be a Pydantic model class")
+    
+    name = model.__name__
+    input_schema = model.model_json_schema()
+    tool = {
+        'toolSpec': {
+            'name': name,
+            'description': description or f"{name} Tool",
+            'inputSchema': {'json': input_schema }
+        }
+    }
+    return tool
 
 # def mock_process_image(image_path: str) -> str:
 #     """
