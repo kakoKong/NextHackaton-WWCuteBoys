@@ -82,9 +82,12 @@ resource "aws_opensearch_domain" "vibe_search" {
     enabled                        = false
     internal_user_database_enabled = false
   }
-}
 
-##############################
+  log_publishing_options {
+    cloudwatch_log_group_arn = aws_cloudwatch_log_group.opensearch_logs.arn
+    log_type                 = "INDEX_SLOW_LOGS"
+  }
+}
 # 4. ECS Cluster (No Fargate yet)
 ##############################
 resource "aws_ecs_cluster" "vibe_cluster" {
