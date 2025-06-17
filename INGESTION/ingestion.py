@@ -1,23 +1,87 @@
-import boto3
 import json
-import os
+import boto3
 from dotenv import load_dotenv
 from opensearchpy import OpenSearch
-import uuid
+import os
+from tqdm import tqdm
 import pandas as pd
 
+# Load environment variables
 load_dotenv(override=True)
+AWS_ACCESS_KEY_ID = os.environ["AWS_ACCESS_KEY_ID"]
+AWS_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
+AWS_DEFAULT_REGION = os.environ["AWS_DEFAULT_REGION"]
+AWS_OPENSEARCH_ENDPOINT = os.environ["AWS_OPENSEARCH_ENDPOINT"]
+AWS_OPENSEARCH_USERNAME = os.environ["AWS_OPENSEARCH_USERNAME"]
+AWS_OPENSEARCH_PASSWORD = os.environ["AWS_OPENSEARCH_PASSWORD"]
 
+client = OpenSearch(
+    hosts=[{'host': AWS_OPENSEARCH_ENDPOINT, 'port': 443}],
+    http_auth=(AWS_OPENSEARCH_USERNAME, AWS_OPENSEARCH_PASSWORD),
+    use_ssl=True,
+    verify_certs=True,
+    ssl_show_warn=False,
+)
+
+
+def creating_index_body(index_name, dimension=1024):
+    # Create index with mapping for embeddings
+    create_index_body = {
+        "settings": {
+            "index": {
+                "knn": True,
+                "analysis": {
+                    "analyzer": {
+                        "analyzer_shingle": {
+                            "tokenizer": "icu_tokenizer",
+                            "filter": [
+                                "filter_shingle"
+                            ]
+                        }
+                    },
+                    "filter": {
+                        "filter_shingle": {
+                            "type": "shingle",
+                            "max_shingle_size": 3,
+                            "min_shingle_size": 2,
+                            "output_unigrams": "true"
+                        }
+                    }
+                }
+            }
+        },  
+        "mappings": {
+            "properties": {
+                "Product Name": {"type": "text"},
+                "Product Description": {"type": "text", "analyzer": "analyzer_shingle"},
+                "Product Price": {"type": "float"},
+                "Image": {"type": "text"},
+                "vector_en": {
+                    "type": "knn_vector",
+                    "dimension": dimension,
+                    "method": {
+                        "name": "hnsw",
+                        "space_type": "cosinesimil"
+                    }
+                }
+            }
+        }
+    }
+    
+    if not client.indices.exists(index=index_name):
+        print(f"Index '{index_name}' does not exist. Creating a new one")
+    else:
+        response = client.indices.delete(index=index_name)
+        print(f"Index '{index_name}' deleted successfully.")
+    client.indices.create(index=index_name, body=create_index_body)
 def get_titan_embedding(text: str) -> list:
-    """
-    Get embeddings with proper error handling
-    """
-    try: 
+    """Get embeddings with proper error handling"""
+    try:
         bedrock = boto3.client(
             'bedrock-runtime', 
-            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            region_name= os.getenv("AWS_DEFAULT_REGION")
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            region_name=AWS_DEFAULT_REGION
         )
         
         payload = {"inputText": text}
@@ -47,158 +111,110 @@ def get_titan_embedding(text: str) -> list:
         print(f"Error getting embedding: {e}")
         return None
 
-def setup_opensearch_client():
-    """
-    Funtion use to setup OpenSearch client with proper error handling     
-    """
-    endpoint = os.getenv("AWS_OPENSEARCH_ENDPOINT")
-    username = os.getenv("AWS_OPENSEARCH_USERNAME")
-    password = os.getenv("AWS_OPENSEARCH_PASSWORD")
-    if not endpoint:
-        print("AWS_OPENSEARCH_ENDPOINT not found in .env file")
-        return None
-    if endpoint.startswith('https://'):
-        endpoint = endpoint.replace('https://', '')
-    
-    try:
-        client = OpenSearch(
-            hosts=[{'host': endpoint, 'port': 443}],
-            http_auth=(username, password) if username and password else None,
-            use_ssl=True,
-            verify_certs=True,
-            ssl_show_warn=False
-        )
-        print("OpenSearch client setup successfully")
-        return client
-    
-    except Exception as e:
-        print(f"Error setting up OpenSearch client: {e}")
-        return None
 
-client = setup_opensearch_client()
-if client:
-    index_name = "test-index"  # Name of the index to create or use
-    # Updated index config for 1024 dimensions (Titan v2)
-    index_config = {
-        "settings": {
-            "index": {
-                "knn": True
-            }
-        },
-        "mappings": {
-            "properties": {
-                "text": {"type": "text"},
-                "embedding": {
-                    "type": "knn_vector",
-                    "dimension": 1024,  # Updated to match Titan v2
-                    "method": {
-                        "name": "hnsw",
-                        "space_type": "cosinesimil",
-                        "engine": "nmslib"
-                    }
+def ingestion_data_opensearch(index_name, dataframe):
+    # Index the documents with semantic embeddings and raw text
+    for i in tqdm(range(len(dataframe)), desc="Ingesting products", unit="item"):
+        # Generate embeddings
+        Product_Name = dataframe.iloc[i]['Product Name']
+        Product_Description = dataframe.iloc[i]['Product Description']
+        Product_Price = dataframe.iloc[i]['Product Price']
+        Image = dataframe.iloc[i]['Image']
+        embedding = get_titan_embedding(Product_Description)
+
+        # Index document with both raw text and embeddings
+        res = client.index(index=index_name, id=i, body={
+            "Product Name": Product_Name,
+            "Product Description": Product_Description,
+            "Product Price": Product_Price,
+            "Image": Image,
+            "vector_en": embedding 
+        })
+        # Optional: You can keep or remove this line depending on how verbose you want the output
+        # print(f"Document {i} indexing result: {res['result']}")
+
+
+def fuzzy_search(index_name, search_term):
+    print("\nFuzzy search\n")
+    # Fuzzy search
+    fuzzy_query = {
+        "query": {
+            "fuzzy": {
+                "Product Description": {  # Changed from en_character to Product Description
+                    "value": search_term,
+                    "fuzziness": "AUTO"  # You can adjust the fuzziness level
                 }
             }
         }
     }
-    try:
-        if not client.indices.exists(index=index_name):
-            client.indices.create(
-                index=index_name,
-                body=index_config
-            )
-            print(f"Index '{index_name}' created successfully")
-        else:
-            print(f"Index '{index_name}' already exists")
-    except Exception as e:
-        print(f"Error creating index: {e}")
+
+    res = client.search(index=index_name, body=fuzzy_query)
+    print(f"Got {res['hits']['total']['value']} Hits:")
+    for hit in res['hits']['hits']:
+        print(f"Product: {hit['_source']['Product Name']}")
+        print(f"Description: {hit['_source']['Product Description']}")
+        print(f"Price: {hit['_source']['Product Price']}")
+        print("---")
+
+def semantic_search(search_term, top_k=3, index_name="product-index"):
+    """
+    Perform a semantic search on the specified OpenSearch index using the given search term.
+
+    Args:
+    search_term (str): The search term for the semantic search.
+    top_k (int, optional): The number of documents to retrieve from the OpenSearch database
+    index_name (str, optional): The name of the OpenSearch index to search.
     
-def index_text(text: str):
+    Returns:
+    dict: A dictionary with product information
     """
-    Index text with
-    """
-    if not client:
-        print("Opensearch Client not available")
-        return False 
-
-    if not text or text.strip() == "":
-        print("Text is empty, skipping indexing")
-        return False
-    
-    try:
-        embedding = get_titan_embedding(text)
-        
-        if embedding is None:
-            print(f"Failed to get embedding for text: {text}")
-            return False
-
-        doc_id = str(uuid.uuid4())
-        doc = {
-            "text": text,
-            "embedding": embedding
-        }
-        response = client.index(
-            index=index_name,
-            id=doc_id,
-            body=doc,
-        )
-        return True
-    except Exception as e:
-        print(f"Error indexing text '{text}': {e}")
-        return False
-
-def search_similar_text(query: str, k: int = 5):
-    """
-    Search for similar text using the indexed embeddings
-    """
-    if not client:
-        print("Opensearch Client not available")
-        return []
-    try:
-        embedding = get_titan_embedding(query)
-        if embedding is None:
-            print(f"Failed to get embedding for query: {query}")
-            return []
-        body = {
-            "size": k,
-            "query": {
-                "knn": {
-                    "embedding": {
-                        "vector": embedding,
-                        "k": k
-                    }
+    print("\nSemantic search\n")
+    # Semantic search in OpenSearch
+    vector_query = {
+        "size": top_k,
+        "query": {
+            "knn": {
+                "vector_en": {
+                    "vector": get_titan_embedding(search_term),
+                    "k": top_k
                 }
             }
         }
-        response = client.search(index=index_name, body=body)
-        results = []
-        for hit in response['hits']['hits']:
-            results.append({
-                'text': hit['_source']['text'],
-                'score': hit['_score']
-            })
-        return results
-    except Exception as e:
-        print(f"Error searching similar text for query '{query}': {e}")
-        return []
+    }
+
+    results_names = {}
+    results_descriptions = {}
+    results_prices = {}
+    results_images = {}
+
+    i = 1
+    semantic_resp = client.search(index=index_name, body=vector_query)
     
-    
-    
+    for hit in semantic_resp['hits']['hits']:
+        print("CURRENT SCORE: ", hit['_score'])
+        if hit['_score'] > 0.70:  # You can adjust this threshold as needed
+            results_names[f"product{i}"] = hit['_source']['Product Name']
+            results_descriptions[f"description{i}"] = hit['_source']['Product Description']
+            results_prices[f"price{i}"] = hit['_source']['Product Price']
+            results_images[f"image{i}"] = hit['_source']['Image']
+            i += 1
+
+    return (results_names, results_descriptions, results_prices, results_images)
+
 if __name__ == "__main__":
-    if client:
-        print(f"\n=== Indexing Documents ===")
-        texts = [
-            "The capital of France is Paris.",
-            "Machine learning is a branch of AI.",
-            "Bananas are yellow.",
-            "Python is a programming language.",
-            "The sky is blue during the day."
-        ]
-        for text in texts:
-            index_text(text)
-        print("\n=== Searching Similar Text ===")
-        query = "What is the capital of France?"
-        results = search_similar_text(query, k=3)
-        for i, result in enumerate(results, 1):
-            print(f"{i}. {result['text']} (Score: {result['score']})")
-    else:
-        print("OpenSearch client not available, cannot index or search.") 
+    index_name = "product-index"
+    creating_index_body(index_name)
+    # Example DataFrame for testing
+    df = pd.read_csv("../data.csv")
+    ingestion_data_opensearch(index_name, df)
+    # results = semantic_search("great product", top_k=3, index_name=index_name)
+    # print("Search Results:")
+    # for i in range(1, len(results[0]) + 1):
+    #     print(f"Input {i}: great product")
+    #     print(f"Product {i}: {results[0][f'product{i}']}")
+    #     print(f"Description {i}: {results[1][f'description{i}']}")
+    #     print(f"Price {i}: {results[2][f'price{i}']}")
+    #     print(f"Image {i}: {results[3][f'image{i}']}")
+    #     print("---")
+        
+        
