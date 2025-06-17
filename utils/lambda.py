@@ -6,7 +6,7 @@ import io
 s3 = boto3.client('s3')
 bedrock = boto3.client('bedrock-runtime')
 
-BUCKET_NAME = 'your-fashion-bucket'  # <-- Replace with your bucket
+BUCKET_NAME = 'testbucketwwcuteboys'  # <-- Replace with your bucket
 CSV_KEY = 'products.csv'
 
 def generate_product_description_claude(text_label):
