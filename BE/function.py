@@ -26,16 +26,15 @@ def load_env_file():
 # Load .env file at module import
 load_env_file()
 
+AWS_S3_BUCKET_NAME = os.environ.get("AWS_S3_BUCKET_NAME")
+
 def get_bedrock_client():
     """Initialize Bedrock client with proper error handling"""
     try:
         # Check if credentials are available
         aws_access_key = os.environ.get("AWS_ACCESS_KEY_ID")
-        print("ACCESSKEY: ", aws_access_key)
         aws_secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
-        print("aws_secret_key: ", aws_secret_key)
         region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
-        print("region: ", region)
         
         if not aws_access_key or not aws_secret_key:
             logger.error("AWS credentials not found in environment variables")
@@ -56,9 +55,45 @@ def get_bedrock_client():
         logger.error(f"Failed to initialize Bedrock client: {e}")
         return None
 
+def get_s3_client():
+    """Initialize Bedrock client with proper error handling"""
+    try:
+        # Check if credentials are available
+        aws_access_key = os.environ.get("AWS_ACCESS_KEY_ID")
+        aws_secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
+        region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+        
+        if not aws_access_key or not aws_secret_key:
+            logger.error("AWS credentials not found in environment variables")
+            logger.info("Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY")
+            return None
+        
+        client = boto3.client(
+            "s3",
+            region_name=region,
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_key,
+        )
+        
+        logger.info(f"Bedrock client initialized for region: {region}")
+        return client
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize Bedrock client: {e}")
+        return None
+
 # Initialize client
 bedrock_client = get_bedrock_client()
+s3_client = get_s3_client()
 model_id = os.environ.get('BEDROCK_MODEL_ID', 'anthropic.claude-3-5-haiku-20241022-v1:0')
+
+def download_file_from_s3(path_to_file_s3: str, download_path: str) -> None:
+    # Configurations
+    # object_key = path_to_file_s3  # key of the image in the bucket
+    # download_path = 'Images/latest.png'  # where to save the image locally
+    # Download the image
+    s3_client.download_file(AWS_S3_BUCKET_NAME, path_to_file_s3, download_path)
+    print(f"Image downloaded to {download_path}")
 
 async def chat_with_bedrock(messages: List[Dict[str, str]]) -> Dict[str, Any]:
     """
@@ -229,21 +264,21 @@ def mock_semantic_search(query: str) -> Dict[str, str]:
         # Default to first product
         return mock_products[0]
 
-def mock_process_image(image_path: str) -> str:
-    """
-    Mock image processing - returns fixed caption
-    """
-    # In a real implementation, this would:
-    # 1. Download image from S3
-    # 2. Use Bedrock Vision model or Amazon Rekognition
-    # 3. Generate caption
+# def mock_process_image(image_path: str) -> str:
+#     """
+#     Mock image processing - returns fixed caption
+#     """
+#     # In a real implementation, this would:
+#     # 1. Download image from S3
+#     # 2. Use Bedrock Vision model or Amazon Rekognition
+#     # 3. Generate caption
     
-    # For now, return mock caption based on image path
-    if 'dress' in image_path.lower():
-        return "A red dress displayed on a mannequin in a retail store"
-    elif 'shoes' in image_path.lower():
-        return "Brown leather shoes on a display shelf"
-    elif 'jeans' in image_path.lower():
-        return "Blue jeans hanging on a clothing rack"
-    else:
-        return "A product item displayed in a retail environment"
+#     # For now, return mock caption based on image path
+#     if 'dress' in image_path.lower():
+#         return "A red dress displayed on a mannequin in a retail store"
+#     elif 'shoes' in image_path.lower():
+#         return "Brown leather shoes on a display shelf"
+#     elif 'jeans' in image_path.lower():
+#         return "Blue jeans hanging on a clothing rack"
+#     else:
+#         return "A product item displayed in a retail environment"

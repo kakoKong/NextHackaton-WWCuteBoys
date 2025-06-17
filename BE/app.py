@@ -5,7 +5,7 @@ import json
 import time
 import logging
 
-from function import chat_with_bedrock, mock_semantic_search, mock_process_image, image_to_text
+from function import chat_with_bedrock, mock_semantic_search, image_to_text, download_file_from_s3
 
 
 # Configure logging
@@ -101,9 +101,10 @@ async def image_captioning(request: ImageCaptioningRequest):
         start_time = time.time()
         model_id = "anthropic.claude-3-haiku-20240307-v1:0"
         # Mock image processing
+        download_file_from_s3(request.image_path, "images/latest.png")
         response_caption = await image_to_text(model_id,
                         "Please describe the content of this image in detail",
-                        input_image=request.image_path)
+                        input_image="images/latest.png")
         # caption = mock_process_image(request.image_path)
         
         processing_time = time.time() - start_time
