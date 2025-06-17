@@ -5,7 +5,8 @@ import json
 import time
 import logging
 
-from function import chat_with_bedrock, mock_semantic_search, mock_process_image
+from function import chat_with_bedrock, mock_semantic_search, mock_process_image, image_to_text
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -98,14 +99,17 @@ async def finding_documents(request: FindingDocumentsRequest):
 async def image_captioning(request: ImageCaptioningRequest):
     try:
         start_time = time.time()
-        
+        model_id = "anthropic.claude-3-haiku-20240307-v1:0"
         # Mock image processing
-        caption = mock_process_image(request.image_path)
+        response_caption = await image_to_text(model_id,
+                        "Please describe the content of this image in detail",
+                        input_image=request.image_path)
+        # caption = mock_process_image(request.image_path)
         
         processing_time = time.time() - start_time
         
         return ImageCaptioningResponse(
-            results=caption,
+            results=response_caption,
             processing_time=processing_time
         )
         

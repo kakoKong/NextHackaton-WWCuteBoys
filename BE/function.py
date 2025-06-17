@@ -4,6 +4,10 @@ import os
 from typing import List, Dict, Any
 from botocore.exceptions import ClientError, NoCredentialsError
 import logging
+from dotenv import load_dotenv
+import json
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +31,11 @@ def get_bedrock_client():
     try:
         # Check if credentials are available
         aws_access_key = os.environ.get("AWS_ACCESS_KEY_ID")
+        print("ACCESSKEY: ", aws_access_key)
         aws_secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
-        region = os.environ.get("AWS_REGION", "us-east-1")
+        print("aws_secret_key: ", aws_secret_key)
+        region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+        print("region: ", region)
         
         if not aws_access_key or not aws_secret_key:
             logger.error("AWS credentials not found in environment variables")
@@ -51,7 +58,7 @@ def get_bedrock_client():
 
 # Initialize client
 bedrock_client = get_bedrock_client()
-model_id = os.environ.get('BEDROCK_MODEL_ID', 'anthropic.claude-3-haiku-20240307-v1:0')
+model_id = os.environ.get('BEDROCK_MODEL_ID', 'anthropic.claude-3-5-haiku-20241022-v1:0')
 
 async def chat_with_bedrock(messages: List[Dict[str, str]]) -> Dict[str, Any]:
     """
@@ -128,6 +135,57 @@ async def chat_with_bedrock(messages: List[Dict[str, str]]) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         raise Exception(f"Chat error: {e}")
+
+async def image_to_text(model_id,
+                          input_text,
+                          input_image):
+    """
+    Sends a message to a model.
+    Args:
+        bedrock_client: The Boto3 Bedrock runtime client.
+        model_id (str): The model ID to use.
+        input text : The input message.
+        input_image : The input image.
+
+    Returns:
+        response (JSON): The conversation that the model generated.
+
+    """
+
+    print(f"Generating message with model {model_id}")
+
+    # Message to send.
+
+    with open(input_image, "rb") as f:
+        image = f.read()
+
+    message = {
+        "role": "user",
+        "content": [
+            {
+                "text": input_text
+            },
+            {
+                    "image": {
+                        "format": 'jpeg',
+                        "source": {
+                            "bytes": image
+                        }
+                    }
+            }
+        ]
+    }
+
+    messages = [message]
+
+    # Send the message.
+    response = bedrock_client.converse(
+        modelId=model_id,
+        messages=messages
+    )
+
+    return response['output']['message']['content'][0]['text']
+
 
 def mock_semantic_search(query: str) -> Dict[str, str]:
     """
