@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from opensearchpy import OpenSearch
 import uuid
+import pandas as pd
 
 load_dotenv(override=True)
 
@@ -179,6 +180,7 @@ def search_similar_text(query: str, k: int = 5):
     except Exception as e:
         print(f"Error searching similar text for query '{query}': {e}")
         return []
+    
     
     
 if __name__ == "__main__":
