@@ -133,11 +133,21 @@ async def style_complement(request: StyleComplementRequest):
         messages = [
             {
                 "role": "system", 
-                "content": "You are an expert product search assistant. Your task is to generate alternative product suggestions that complement the user's style based on their query and image. Return as an array of strings."
+                "content": (
+                    "You are a fashion recommendation assistant. Based on the image, assume the user already owns the outfit shown. "
+                    "Your goal is to suggest what the user might want next to complete, complement, or contrast with the look. "
+                    "This includes suggestions for shoes, bags, accessories, layering options, casual variations, or ways to remix items. "
+                    "Avoid repeating or rephrasing what they are already wearing (e.g. gray suit or red tie). "
+                    "Return only a short list (5–7 max) of helpful search queries in this format: a JSON array of strings."
+                )
             },
             {
                 "role": "user", 
-                "content": f"Generate search queries to recommend what kind of different style(s) may be best suited. Add as much context as possible. Use the following chat history focus your answer on the latest user turn: {request.user_query}. Image context: {request.image_prompt}. Return your result as an array of strings."
+                "content": (
+                    f"User query: {request.user_query}. "
+                    f"Image context: {request.image_prompt}. "
+                    f"Return a list of search queries the user might want next — not descriptions."
+                )
             }
         ]
         
