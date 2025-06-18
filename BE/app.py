@@ -226,7 +226,7 @@ async def style_complement(request: StyleComplementRequest):
                     "Your job is to generate search queries for clothing items that **go well with the shown item**. "
                     "Focus only on complementary pieces (e.g., if the user has trousers, suggest tops, not more trousers). "
                     "Do not return neutral basics unless they align with the item's visual or cultural theme. "
-                    "Instead, emphasize tops with **cohesive style, regional or cultural match**, or elevated texture (e.g., Thai silk shirt, boho embroidery top, mandarin collar shirt, etc.). "
+                    "Instead, emphasize tops with **cohesive style, regional or cultural match**, or elevated texture. "
                     "Avoid repeating what the user already owns. Respond with a JSON array of 5–7 **search queries only**, no explanations or formatting."
                 )
             },
