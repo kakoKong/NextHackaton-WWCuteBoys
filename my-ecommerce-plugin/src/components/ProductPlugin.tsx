@@ -72,13 +72,14 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
         setSelectedImage(null);
         setImagePreview(null);
 
+        const safeImageFile = imageFile ?? undefined;
         try {
             let recommendations: Product[];
 
             if (currentMode === 'product') {
-                recommendations = await callProductMatchingAPI(queryText, imageFile);
+                recommendations = await callProductMatchingAPI(queryText, safeImageFile);
             } else {
-                recommendations = await callStyleMatchingAPI(queryText, imageFile);
+                recommendations = await callStyleMatchingAPI(queryText, safeImageFile);
             }
 
             const botMessage: Message = {
