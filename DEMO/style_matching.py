@@ -21,7 +21,7 @@ def style_matching(caption_payload, user_messages):
     print(f"Style Complement")
     doc_payload = {
         "user_query": f'''{user_messages}''',
-        "image_prompt": image_caption
+        "image_prompt": ""
     }
     result = post_request(
         "style_complement",
