@@ -20,6 +20,9 @@ interface Message {
 // AI simulation functions for the plugin
 const callProductMatchingAPI = async (query: string, imageFile?: File): Promise<Product[]> => {
     // Simulate API delay
+    if (imageFile){
+        // Store image to s3, and then return s3 url
+    }
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Simulate product matching logic - focus on functionality and category
@@ -69,13 +72,14 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
         setSelectedImage(null);
         setImagePreview(null);
 
+        const safeImageFile = imageFile ?? undefined;
         try {
             let recommendations: Product[];
 
             if (currentMode === 'product') {
-                recommendations = await callProductMatchingAPI(queryText, imageFile);
+                recommendations = await callProductMatchingAPI(queryText, safeImageFile);
             } else {
-                recommendations = await callStyleMatchingAPI(queryText, imageFile);
+                recommendations = await callStyleMatchingAPI(queryText, safeImageFile);
             }
 
             const botMessage: Message = {
@@ -119,7 +123,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
                 gradient: 'from-blue-600 to-indigo-600',
                 textgradient: 'from-blue-300 to-indigo-100',
                 placeholder: 'Looking for wireless headphones...',
-                examples: ['electronics', 'clothing', 'home decor', 'accessories']
+                examples: ['blue shirt', 'pink dress', 'long jeans', 'accessories']
             };
         } else {
             return {
@@ -138,7 +142,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
     const IconComponent = config.icon;
 
     return (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden transform transition-all duration-500 hover:shadow-xl hover:scale-[1.02]">
             {/* Header with Mode Toggle */}
             <div className={`bg-gradient-to-r ${config.gradient} p-4`}>
                 <h2 className={`text-2xl font-bold bg-gradient-to-r ${config.textgradient} bg-clip-text text-transparent mb-3`}>
@@ -278,7 +282,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
 
                     <input
                         type="text"
-                        className="flex-1 p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="flex-1 p-3 border border-gray-300 text-black rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         placeholder={config.placeholder}
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
