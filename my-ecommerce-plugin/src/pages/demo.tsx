@@ -169,7 +169,7 @@ export default function EcommerceDemo() {
         {/* Enhanced Floating Assistant Button */}
         <button
           onClick={() => setShowPlugin(prev => !prev)}
-          className={`cursor-pointer fixed bottom-8 right-8 z-50 group transition-all duration-500 transform hover:scale-110 active:scale-95 ${showPlugin
+          className={`cursor-pointer fixed bottom-3 right-3 sm:bottom-8 sm:right-8 z-50 group transition-all duration-500 transform hover:scale-110 active:scale-95 ${showPlugin
             ? 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 shadow-red-500/30'
             : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-purple-500/30'
             } text-white rounded-full shadow-2xl hover:shadow-3xl p-4 backdrop-blur-sm border border-white/20`}
@@ -200,7 +200,7 @@ export default function EcommerceDemo() {
 
         {/* Enhanced Plugin Container */}
         {showPlugin && (
-          <div className="fixed bottom-28 right-8 z-40 w-[380px] max-w-[calc(100vw-2rem)] animate-slideInUp">
+          <div className="fixed bottom-28 z-40 w-[380px] max-w-[calc(100vw-2rem)] animate-slideInUp">
             <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20 overflow-hidden transform hover:shadow-3xl transition-all duration-500">
               <ProductPlugin onRecommendation={handleRecommendation} />
             </div>

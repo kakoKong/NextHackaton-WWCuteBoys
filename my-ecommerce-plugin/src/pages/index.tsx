@@ -20,61 +20,61 @@ export default function ModernLandingPage() {
   const features = [
     {
       icon: <Brain className="w-8 h-8" />,
-      title: "AI-Powered Matching",
-      description: "Advanced machine learning algorithms analyze your preferences to find perfect product matches with 95% accuracy."
+      title: "Style Matching via Image",
+      description: "Upload photos, selfies, or screenshots to get matching and complementary product recommendations powered by advanced AI."
     },
     {
       icon: <Sparkles className="w-8 h-8" />,
-      title: "Visual Style Recognition",
-      description: "Upload any image and our AI instantly understands your aesthetic, recommending products that match your vibe."
+      title: "Function-Based Product Search",
+      description: `Natural language queries like "pink shirt for a picnic" return curated recommendations based on purpose and context.`
     },
     {
       icon: <Zap className="w-8 h-8" />,
-      title: "Real-Time Recommendations",
-      description: "Get instant, personalized suggestions that adapt to your browsing behavior and evolving preferences."
+      title: "Retailer API Integration",
+      description: "Plug-and-play solution for major brands to connect their catalogs and enable real-time, stock-based recommendations."
     },
     {
       icon: <TrendingUp className="w-8 h-8" />,
-      title: "Trend Analysis",
-      description: "Stay ahead of fashion trends with AI-curated recommendations based on global style movements."
+      title: "Style Persona Recognition",
+      description: "Personalized recommendations that align with individual aesthetic preferences using multimodal AI embeddings."
     }
   ];
 
   const stats = [
-    { number: "2M+", label: "Happy Customers", icon: <Users className="w-6 h-6" /> },
-    { number: "95%", label: "Match Accuracy", icon: <Award className="w-6 h-6" /> },
-    { number: "10x", label: "Better Conversion", icon: <TrendingUp className="w-6 h-6" /> },
-    { number: "24/7", label: "AI Assistance", icon: <Brain className="w-6 h-6" /> }
+    { number: "26M+", label: "User in Thailand", icon: <Users className="w-6 h-6" /> },
+    { number: "500M", label: "Digital buyers across Asia", icon: <Award className="w-6 h-6" /> },
+    { number: "50+", label: "Major e-commerce platforms in SEA", icon: <TrendingUp className="w-6 h-6" /> },
+    { number: "85%", label: "Consumers prefer personalized shopping", icon: <Brain className="w-6 h-6" /> }
   ];
 
   const testimonials = [
     {
-      name: "Sarah Chen",
-      role: "Fashion Enthusiast",
-      content: "This AI completely transformed my shopping experience. It found pieces I never would have discovered!",
+      name: "Pattarathon Nopwattanapong",
+      role: "Kong",
+      content: "Sawasdee kabbb",
       rating: 5,
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face"
+      avatar: "/assets/Kong.png"
     },
     {
-      name: "Marcus Rivera",
-      role: "Style Blogger",
-      content: "The accuracy is incredible. It's like having a personal stylist who knows exactly what I want.",
+      name: "Kandanai Leenutapong",
+      role: "Mew",
+      content: "Helloooo",
       rating: 5,
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face"
+      avatar: "/assets/Mew.png"
     },
     {
-      name: "Emma Thompson",
-      role: "Designer",
-      content: "I'm amazed by how well it understands style preferences from just a single image upload.",
+      name: "Phudish Prateepamornkul",
+      role: "Tam",
+      content: "ni hao maaa",
       rating: 5,
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=60&h=60&fit=crop&crop=face"
+      avatar: "assets/Tam.png"
     }
   ];
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
       {/* Animated Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-purple-900/20 via-black to-pink-900/20">
+      <div className="fixed inset-0 bg-gradient-to-br from-blue-900/20 via-black to-gray-900/20">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(147,51,234,0.1),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(236,72,153,0.1),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.1),transparent_50%)]" />
@@ -85,7 +85,7 @@ export default function ModernLandingPage() {
         {[...Array(20)].map((_, i) => (
           <div
             key={i}
-            className="absolute w-1 h-1 bg-purple-400 rounded-full opacity-60 animate-pulse"
+            className="absolute w-1 h-1 bg-blue-400 rounded-full opacity-60 animate-pulse"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -101,20 +101,17 @@ export default function ModernLandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl">
+              <div className="p-2 bg-gradient-to-r from-blue-600 to-gray-600 rounded-xl">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-gray-400 bg-clip-text text-transparent">
                 VibeShopping.AI
               </span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-gray-300 hover:text-white transition-colors">Features</a>
-              <a href="/demo" className="text-gray-300 hover:text-white transition-colors">Demo</a>
-              <a href="#testimonials" className="text-gray-300 hover:text-white transition-colors">Reviews</a>
-              <button className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105">
-                Get Started
-              </button>
+              <a href="#demo" className="text-gray-300 hover:text-white transition-colors">Video Demo</a>
+              <a href="/demo" className="text-gray-300 hover:text-white transition-colors">Live Demo</a>
             </div>
           </div>
         </div>
@@ -125,17 +122,17 @@ export default function ModernLandingPage() {
         <div className="text-center max-w-5xl mx-auto">
           <div className="mb-8" style={floatingAnimation}>
             <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-lg rounded-full border border-white/20 mb-6">
-              <Sparkles className="w-4 h-4 text-purple-400 mr-2" />
-              <span className="text-sm text-gray-300">Powered by Advanced AI Technology</span>
+              <Sparkles className="w-4 h-4 text-blue-400 mr-2" />
+              <span className="text-sm text-gray-300">Next Hackathon</span>
             </div>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold mb-8 leading-tight">
-            <span className="bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-white via-blue-200 to-gray-200 bg-clip-text text-transparent">
               Shop Smarter
             </span>
             <br />
-            <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-400 to-gray-400 bg-clip-text text-transparent">
               with AI Magic
             </span>
           </h1>
@@ -147,22 +144,24 @@ export default function ModernLandingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
             <a href="/demo">
-              <button className="cursor-pointer group px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-semibold text-lg hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105 shadow-2xl shadow-purple-500/25 flex items-center">
+              <button className="cursor-pointer group px-8 py-4 bg-gradient-to-r from-blue-600 to-gray-600 rounded-full font-semibold text-lg hover:from-blue-700 hover:to-gray-700 transition-all transform hover:scale-105 shadow-2xl shadow-blue-500/25 flex items-center">
                 <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-                See Demo
+                Play with Live Demo
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </button>
             </a>
-            <button className="px-8 py-4 border-2 border-white/20 rounded-full font-semibold text-lg hover:bg-white/10 backdrop-blur-lg transition-all">
-              Learn More
-            </button>
+            <a href="#demo">
+              <button className="px-8 py-4 border-2 border-white/20 rounded-full font-semibold text-lg hover:bg-white/10 backdrop-blur-lg transition-all">
+                Video Demo
+              </button>
+            </a>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
             {stats.map((stat, index) => (
               <div key={index} className="text-center p-6 bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 hover:bg-white/10 transition-all">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl mb-4">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-600 to-gray-600 rounded-xl mb-4">
                   {stat.icon}
                 </div>
                 <div className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
@@ -187,7 +186,7 @@ export default function ModernLandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-400 to-gray-400 bg-clip-text text-transparent">
                 Revolutionary Features
               </span>
             </h2>
@@ -202,10 +201,10 @@ export default function ModernLandingPage() {
                 key={index}
                 className="group p-8 bg-white/5 backdrop-blur-lg rounded-3xl border border-white/10 hover:bg-white/10 transition-all duration-500 hover:transform hover:scale-105"
               >
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl mb-6 group-hover:scale-110 transition-transform">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-gray-600 rounded-2xl mb-6 group-hover:scale-110 transition-transform">
                   {feature.icon}
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-purple-300 transition-colors">
+                <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-blue-300 transition-colors">
                   {feature.title}
                 </h3>
                 <p className="text-gray-300 leading-relaxed">
@@ -222,7 +221,7 @@ export default function ModernLandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-400 to-gray-400 bg-clip-text text-transparent">
                 See It In Action
               </span>
             </h2>
@@ -232,10 +231,10 @@ export default function ModernLandingPage() {
           </div>
 
           <div className="relative max-w-5xl mx-auto">
-            <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-3xl p-8 backdrop-blur-lg border border-white/10">
+            <div className="bg-gradient-to-r from-blue-600/20 to-gray-600/20 rounded-3xl p-8 backdrop-blur-lg border border-white/10">
               <div className="aspect-video bg-black/50 rounded-2xl flex items-center justify-center group cursor-pointer hover:bg-black/30 transition-all">
                 <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-gray-600 rounded-full mb-4 group-hover:scale-110 transition-transform">
                     <Play className="w-8 h-8 text-white ml-1" />
                   </div>
                   <p className="text-xl font-semibold text-gray-300">Watch Demo Video</p>
@@ -252,12 +251,12 @@ export default function ModernLandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Loved by Millions
+              <span className="bg-gradient-to-r from-blue-400 to-gray-400 bg-clip-text text-transparent">
+                Meet Our Founder
               </span>
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Join millions of satisfied customers who've revolutionized their shopping experience.
+              The Warwick Cute Boy - just a university reunion
             </p>
           </div>
 
@@ -267,17 +266,12 @@ export default function ModernLandingPage() {
                 key={index}
                 className="p-8 bg-white/5 backdrop-blur-lg rounded-3xl border border-white/10 hover:bg-white/10 transition-all"
               >
-                <div className="flex items-center mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                  ))}
-                </div>
                 <p className="text-gray-300 mb-6 leading-relaxed">"{testimonial.content}"</p>
                 <div className="flex items-center">
                   <img
                     src={testimonial.avatar}
                     alt={testimonial.name}
-                    className="w-12 h-12 rounded-full mr-4"
+                    className="w-12 h-12 rounded-full mr-4 object-cover"
                   />
                   <div>
                     <p className="font-semibold text-white">{testimonial.name}</p>
@@ -291,15 +285,15 @@ export default function ModernLandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8">
+      {/* <section className="relative py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-3xl p-12 backdrop-blur-lg border border-white/10">
+          <div className="bg-gradient-to-r from-blue-600/20 to-gray-600/20 rounded-3xl p-12 backdrop-blur-lg border border-white/10">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                 Ready to Transform
               </span>
               <br />
-              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-400 to-gray-400 bg-clip-text text-transparent">
                 Your Shopping?
               </span>
             </h2>
@@ -307,7 +301,7 @@ export default function ModernLandingPage() {
               Join millions of smart shoppers who've discovered the future of e-commerce with AI-powered recommendations.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-semibold text-lg hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105 shadow-2xl shadow-purple-500/25 flex items-center">
+              <button className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-gray-600 rounded-full font-semibold text-lg hover:from-blue-700 hover:to-gray-700 transition-all transform hover:scale-105 shadow-2xl shadow-blue-500/25 flex items-center">
                 <Sparkles className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
                 Start Shopping Smarter
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -318,16 +312,16 @@ export default function ModernLandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Footer */}
       <footer className="relative border-t border-white/10 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-8">
-            <div className="p-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl">
+            <div className="p-2 bg-gradient-to-r from-blue-600 to-gray-600 rounded-xl">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-gray-400 bg-clip-text text-transparent">
               VibeShopping AI
             </span>
           </div>
@@ -335,10 +329,10 @@ export default function ModernLandingPage() {
             © {new Date().getFullYear()} VibeShopping.AI. Revolutionizing e-commerce with artificial intelligence.
           </p>
           <div className="flex items-center justify-center space-x-6 text-gray-400">
-            <a href="#" className="hover:text-purple-400 transition-colors">Privacy</a>
-            <a href="#" className="hover:text-purple-400 transition-colors">Terms</a>
-            <a href="#" className="hover:text-purple-400 transition-colors">Support</a>
-            <a href="#" className="hover:text-purple-400 transition-colors">Contact</a>
+            <a href="#" className="hover:text-blue-400 transition-colors">Privacy</a>
+            <a href="#" className="hover:text-blue-400 transition-colors">Terms</a>
+            <a href="#" className="hover:text-blue-400 transition-colors">Support</a>
+            <a href="#" className="hover:text-blue-400 transition-colors">Contact</a>
           </div>
         </div>
       </footer>

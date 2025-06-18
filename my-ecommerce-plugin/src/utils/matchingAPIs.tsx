@@ -29,26 +29,32 @@ export interface Product {
   
   export function flattenSearchResults(results: RawResult[]): Product[] {
     const allProducts: Product[] = [];
+    const seen = new Set<string>(); // for tracking duplicates
   
     results.forEach((entry) => {
       const category = entry.search_term || "General";
   
       entry.search_results.forEach((item, index) => {
         const fileNameWithoutExt = item.id.replace(/\.[^/.]+$/, ".png");
+        const uniqueKey = `${item.id}-${item.name.toLowerCase().trim()}`;
   
-        allProducts.push({
-          id: `${fileNameWithoutExt}-${index}`,
-          name: item.name,
-          description: item.description,
-          price: item.price,
-          imageUrl: `assets/${fileNameWithoutExt}`,
-          category,
-        });
+        if (!seen.has(uniqueKey)) {
+          seen.add(uniqueKey);
+  
+          allProducts.push({
+            id: `${fileNameWithoutExt}-${index}`,
+            name: item.name,
+            description: item.description,
+            price: item.price,
+            imageUrl: `assets/${fileNameWithoutExt}`,
+            category,
+          });
+        }
       });
     });
   
     return allProducts;
-  }
+  }  
   
   export const uploadImageToS3 = async (file: File, baseUrl: string, setStatus?: (status: MatchingStatus) => void): Promise<string> => {
     if (setStatus) setStatus('analyzing-image');
