@@ -10,6 +10,7 @@ dependencies = [
     "ipykernel>=6.29.5",
     "opensearch-py>=3.0.0",
     "pandas>=2.3.0",
+    "pillow>=11.2.1",
     "pydantic==2.5.0",
     "python-dotenv>=1.1.0",
     "tqdm>=4.67.1",
