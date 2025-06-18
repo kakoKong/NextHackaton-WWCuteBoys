@@ -9,6 +9,7 @@ import logging
 import boto3
 from botocore.exceptions import ClientError
 import uuid
+import asyncio
 
 from function import chat_with_bedrock, image_to_text, download_file_from_s3, convert_pydantic_to_bedrock_tool, function_calling_with_bedrock, semantic_search, get_opensearch_client, invoke_bedrock_model_stream,get_bedrock_client
 from prompt_template import prompt_multi_query
