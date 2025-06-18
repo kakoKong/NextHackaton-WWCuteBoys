@@ -1,3 +1,4 @@
+import { callProductMatchingAPI, callStyleMatchingAPI, MatchingStatus } from '@/utils/matchingAPIs';
 import { Search, ShoppingCart, Heart, Star, Send, Upload, X, Sparkles, Package, Palette, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRef } from 'react';
@@ -16,6 +17,7 @@ interface Message {
     content: string;
     imageUrl?: string;
     recommendedProducts?: Product[];
+    isLoading?: boolean;
 }
 
 interface AIResponse {
@@ -34,219 +36,36 @@ interface RawResult {
     }[];
 }
 
-function flattenSearchResults(results: RawResult[]): Product[] {
-    const allProducts: Product[] = [];
-
-    results.forEach((entry) => {
-        const category = entry.search_term || "General";
-
-        entry.search_results.forEach((item, index) => {
-            const fileNameWithoutExt = item.id.replace(/\.[^/.]+$/, ".png"); // remove .jpg/.png/.webp
-
-            allProducts.push({
-                id: `${fileNameWithoutExt}-${index}`,
-                name: item.name,
-                description: item.description,
-                price: item.price,
-                imageUrl: `assets/${fileNameWithoutExt}`,  // no .jpg extension here
-                category: category,
-            });
-        });
-    });
-
-    return allProducts;
-}
-
-
-// AI simulation functions for the plugin
-export const callProductMatchingAPI = async (query: string, imageFile?: File): Promise<AIResponse> => {
-    const baseUrl = process.env.BACKEND_ENDPOINT ?? "http://localhost:8001";
-
-    try {
-        let imagePrompt = "";
-
-        if (imageFile) {
-            // 1. Upload image to S3 via presigned URL
-            console.log('gt image')
-            const s3Key = await uploadImageToS3(imageFile, baseUrl);
-
-            // 2. Get image caption using S3 key
-            const captionPayload = {
-                image_path: s3Key  // This matches your existing ImageCaptioningRequest
-            };
-
-            const captionRes = await fetch(`${baseUrl}/image_captioning`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(captionPayload)
-            });
-
-            const captionJson = await captionRes.json();
-            imagePrompt = captionJson.results;
+// Utility function to remove duplicate products
+const removeDuplicateProducts = (products: Product[]): Product[] => {
+    const seen = new Set<string>();
+    return products.filter(product => {
+        // Use a combination of id and name for uniqueness check
+        const uniqueKey = `${product.id}-${product.name.toLowerCase().trim()}`;
+        if (seen.has(uniqueKey)) {
+            return false;
         }
-
-        // Rest of your code remains exactly the same...
-        const findingPayload = {
-            user_query: query,
-            image_prompt: imagePrompt
-        };
-
-        const findRes = await fetch(`${baseUrl}/finding_documents`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(findingPayload)
-        });
-
-        const findJson = await findRes.json();
-        const reference = findJson.results;
-
-        const genPayload = {
-            question: `${query}`,
-            reference: JSON.stringify(reference)
-        };
-
-        console.log(genPayload)
-        const genRes = await fetch(`${baseUrl}/generation`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(genPayload)
-        });
-
-        const genJson = await genRes.json();
-        return { genJson: genJson ?? '', reference: flattenSearchResults(reference) ?? [] };
-    } catch (err) {
-        console.error("API error", err);
-        throw err;
-    }
-};
-
-// Helper function for S3 upload
-const uploadImageToS3 = async (file: File, baseUrl: string): Promise<string> => {
-    // Get presigned URL from your backend
-    const presignedRes = await fetch(`${baseUrl}/get-presigned-url`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            fileName: file.name,
-            fileType: file.type
-        })
+        seen.add(uniqueKey);
+        return true;
     });
-
-    if (!presignedRes.ok) {
-        throw new Error('Failed to get presigned URL');
-    }
-    console.log("yess")
-    const { uploadURL, key } = await presignedRes.json();
-
-    // Upload directly to S3
-    const uploadRes = await fetch(uploadURL, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type }
-    });
-
-
-    if (!uploadRes.ok) {
-        throw new Error('Failed to upload to S3');
-    }
-
-    return key; // Return S3 key for your backend to use
 };
-
-const callStyleMatchingAPI = async (query: string, imageFile?: File): Promise<{ recommendations: Product[], genResponse: string }> => {
-    const baseUrl = process.env.BACKEND_ENDPOINT ?? "http://localhost:8001";
-    let imagePrompt = "";
-
-    try {
-        // 1. Upload image and get caption
-        if (imageFile) {
-            const s3Key = await uploadImageToS3(imageFile, baseUrl);
-
-            const captionPayload = { image_path: s3Key };
-            const captionRes = await fetch(`${baseUrl}/image_captioning`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(captionPayload)
-            });
-
-            const captionJson = await captionRes.json();
-            imagePrompt = captionJson.results;
-        }
-
-        // 2. Request style complement (returns text)
-        const styleCompPayload = {
-            user_query: query,
-            image_prompt: imagePrompt
-        };
-
-        const styleRes = await fetch(`${baseUrl}/style_complement`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(styleCompPayload)
-        });
-
-        const styleJson = await styleRes.json();
-        const styleComplementText = styleJson.results;
-
-        // 3. Use that to find relevant documents
-        const docSearchPayload = {
-            user_query: styleComplementText,
-            image_prompt: imagePrompt
-        };
-
-        const docRes = await fetch(`${baseUrl}/finding_documents`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(docSearchPayload)
-        });
-
-        const docJson = await docRes.json();
-        const reference = docJson.results;
-
-        // 4. Final generation
-        const genPayload = {
-            question: query,
-            reference: JSON.stringify(reference)
-        };
-
-        const genRes = await fetch(`${baseUrl}/generation`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(genPayload)
-        });
-
-        const genJson = await genRes.json();
-        return {
-            recommendations: flattenSearchResults(reference),
-            genResponse: genJson.response ?? "Here's what I found for your style."
-        };
-    } catch (err) {
-        console.error("Style matching API error:", err);
-        throw err;
-    }
-};
-
 
 // AI Product Plugin Component
 export default function ProductPlugin({ onRecommendation }: { onRecommendation: (products: Product[]) => void }) {
-
     const bottomRef = useRef<HTMLDivElement | null>(null);
-    // Separate message states for each mode
     const [productMessages, setProductMessages] = useState<Message[]>([]);
     const [styleMessages, setStyleMessages] = useState<Message[]>([]);
-
     const [inputText, setInputText] = useState('');
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [matchingStatus, setMatchingStatus] = useState<MatchingStatus>('idle');
     const [currentMode, setCurrentMode] = useState<'product' | 'style'>('product');
 
-    // Get the current messages based on mode
     const getCurrentMessages = () => {
         return currentMode === 'product' ? productMessages : styleMessages;
     };
 
-    // Set messages based on current mode
     const setCurrentMessages = (messages: Message[] | ((prev: Message[]) => Message[])) => {
         if (currentMode === 'product') {
             setProductMessages(messages);
@@ -275,7 +94,15 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
         setCurrentMessages(prev => [...prev, newUserMessage]);
         setIsLoading(true);
 
-        // Clear input
+        // Create a placeholder bot message that will show products first
+        const placeholderBotMessage: Message = {
+            type: 'bot',
+            content: 'Finding products...',
+            isLoading: true
+        };
+
+        setCurrentMessages(prev => [...prev, placeholderBotMessage]);
+
         const queryText = inputText.trim();
         setInputText('');
         const imageFile = selectedImage;
@@ -283,45 +110,86 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
         setImagePreview(null);
 
         const safeImageFile = imageFile ?? undefined;
+
         try {
-            let recommendations: Product[] = [];
-            let botresponse = '';
+            let finalBotMessage: Message;
 
-            try {
-                if (currentMode === 'product') {
-                    const { genJson, reference } = await callProductMatchingAPI(queryText, safeImageFile);
-                    recommendations = reference;
-                    botresponse = genJson.response ?? '';
-                } else {
-                    const { recommendations: styleRecs, genResponse } = await callStyleMatchingAPI(queryText, safeImageFile);
-                    recommendations = styleRecs;
-                    botresponse = genResponse ?? '';
-                }
-
-                const botMessage: Message = {
+            // Callback to update the message with products immediately
+            const onProductsFound = (products: Product[]) => {
+                // Remove duplicates while preserving order
+                const uniqueProducts = removeDuplicateProducts(products);
+                
+                const productsMessage: Message = {
                     type: 'bot',
-                    content: `${botresponse}\n\nFound ${recommendations.length} ${currentMode === 'product' ? 'products matching your requirements' : 'items with similar style aesthetics'
-                        }.`,
-                    recommendedProducts: recommendations,
+                    content: `Found ${uniqueProducts.length} ${currentMode === 'product' ? 'products matching your requirements' : 'items with similar style aesthetics'}. Generating detailed response...`,
+                    recommendedProducts: uniqueProducts,
+                    isLoading: true
                 };
 
-                setCurrentMessages((prev) => [...prev, botMessage]);
-                onRecommendation(recommendations);
-            } catch (error) {
-                const errorMessage: Message = {
+                // Update the placeholder message with products
+                setCurrentMessages(prev => {
+                    const newMessages = [...prev];
+                    newMessages[newMessages.length - 1] = productsMessage;
+                    return newMessages;
+                });
+
+                // Call the parent callback with deduplicated products
+                onRecommendation(uniqueProducts);
+            };
+
+            if (currentMode === 'product') {
+                const { genJson, reference } = await callProductMatchingAPI(
+                    queryText,
+                    safeImageFile,
+                    onProductsFound,
+                    setMatchingStatus
+                );
+
+                // Remove duplicates from final reference as well
+                const uniqueReference = removeDuplicateProducts(reference);
+
+                finalBotMessage = {
                     type: 'bot',
-                    content: 'Sorry, I encountered an error while searching. Please try again.',
+                    content: genJson.response ?? `Found ${uniqueReference.length} products matching your requirements.`,
+                    recommendedProducts: uniqueReference,
                 };
-                setCurrentMessages((prev) => [...prev, errorMessage]);
-            } finally {
-                setIsLoading(false);
+            } else {
+                const { recommendations, genResponse } = await callStyleMatchingAPI(
+                    queryText,
+                    safeImageFile,
+                    onProductsFound,
+                    setMatchingStatus
+                );
+
+                // Remove duplicates from recommendations
+                const uniqueRecommendations = removeDuplicateProducts(recommendations);
+
+                finalBotMessage = {
+                    type: 'bot',
+                    content: genResponse,
+                    recommendedProducts: uniqueRecommendations,
+                };
             }
+
+            // Update the final message with the generated text
+            setCurrentMessages(prev => {
+                const newMessages = [...prev];
+                newMessages[newMessages.length - 1] = finalBotMessage;
+                return newMessages;
+            });
+
         } catch (error) {
+            console.error('Error in handleSendMessage:', error);
             const errorMessage: Message = {
                 type: 'bot',
                 content: 'Sorry, I encountered an error while searching. Please try again.',
             };
-            setCurrentMessages(prev => [...prev, errorMessage]);
+
+            setCurrentMessages(prev => {
+                const newMessages = [...prev];
+                newMessages[newMessages.length - 1] = errorMessage;
+                return newMessages;
+            });
         } finally {
             setIsLoading(false);
         }
@@ -336,7 +204,6 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
 
     const toggleMode = () => {
         setCurrentMode(prev => prev === 'product' ? 'style' : 'product');
-        // Clear any pending input/image when switching modes
         setInputText('');
         setSelectedImage(null);
         setImagePreview(null);
@@ -369,18 +236,26 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
     const config = getModeConfig();
     const IconComponent = config.icon;
     const currentMessages = getCurrentMessages();
+
     useEffect(() => {
         if (bottomRef.current) {
             bottomRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [currentMessages]);
 
+    const statusTextMap = {
+        'idle': '',
+        'analyzing-image': 'Analyzing uploaded image...',
+        'searching-products': currentMode === 'product' ? 'Searching for matching products...' : 'Searching for aesthetic items...',
+        'generating-response': 'Generating smart suggestions...',
+    } as const;
+
     return (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden transform transition-all duration-500 hover:shadow-xl hover:scale-[1.02]">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden transform transition-all duration-500 hover:shadow-xl">
             {/* Header with Mode Toggle */}
             <div className={`bg-gradient-to-r ${config.gradient} p-4`}>
                 <h2 className={`text-2xl font-bold bg-gradient-to-r ${config.textgradient} bg-clip-text text-transparent mb-3`}>
-                    Vibey.AI
+                    VibeShopping.AI
                 </h2>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -436,51 +311,76 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
                             : 'bg-gray-100 text-gray-800'
                             }`}>
 
-                            <p className="text-sm">{msg.content}</p>
-
-                            {msg.imageUrl && (
-                                <div className="mt-3">
+                            {/* User uploaded image - shown first for user messages */}
+                            {msg.type === 'user' && msg.imageUrl && (
+                                <div className="mb-3">
                                     <img src={msg.imageUrl} alt="Uploaded" className="w-32 h-32 rounded-lg object-cover" />
                                 </div>
                             )}
 
-                            {msg.recommendedProducts && msg.recommendedProducts.length > 0 && (
-                                <div className="mt-4 grid grid-cols-2 gap-3">
-                                    {msg.recommendedProducts.map((product) => (
-                                        <div key={product.id} className="bg-white p-3 rounded-xl shadow-sm border">
-                                            <img
-                                                src={product.imageUrl}
-                                                alt={product.name}
-                                                className="w-full h-20 object-cover rounded-lg mb-2"
-                                            />
-                                            <p className="font-medium text-gray-900 text-xs truncate">{product.name}</p>
-                                            <p className="text-sm font-bold text-indigo-600">{product.price}</p>
+                            {/* For user messages: show content after image */}
+                            {msg.type === 'user' && (
+                                <div className="flex items-center space-x-2">
+                                    <p className="text-sm">{msg.content}</p>
+                                </div>
+                            )}
+
+                            {/* For bot messages: show products first, then content */}
+                            {msg.type === 'bot' && (
+                                <>
+                                    {/* Recommended products - shown FIRST for bot messages */}
+                                    {msg.recommendedProducts && msg.recommendedProducts.length > 0 && (
+                                        <div className="mb-4 grid grid-cols-2 gap-3">
+                                            {msg.recommendedProducts.map((product) => (
+                                                <div key={`${product.id}-${product.name}`} className="bg-white p-3 rounded-xl shadow-sm border">
+                                                    {/* Product image shown first */}
+                                                    <img
+                                                        src={product.imageUrl}
+                                                        alt={product.name}
+                                                        className="w-full h-20 object-cover rounded-lg mb-2"
+                                                        onError={(e) => {
+                                                            // Fallback for broken images
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiAxNkM5Ljc5IDEzLjc5IDkuNzkgMTAuMjEgMTIgOEMxNC4yMSAxMC4yMSAxNC4yMSAxMy43OSAxMiAxNloiIGZpbGw9IiM5Q0EzQUYiLz4KPC9zdmc+';
+                                                        }}
+                                                    />
+                                                    {/* Product details shown after image */}
+                                                    <p className="font-medium text-gray-900 text-xs truncate" title={product.name}>
+                                                        {product.name}
+                                                    </p>
+                                                    <p className="text-sm font-bold text-indigo-600">{product.price}</p>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
+                                    )}
+
+                                    {/* Message content - shown AFTER products for bot messages */}
+                                    <div className="flex items-center space-x-2">
+                                        <p className="text-sm">{msg.content}</p>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Loading indicator */}
+                            {msg.isLoading && (
+                                <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm mt-3">
+                                    <div className="flex items-center space-x-3 text-gray-600">
+                                        <div className="flex space-x-1">
+                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-75"></div>
+                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
+                                        </div>
+                                        <span className="text-sm">
+                                            {statusTextMap[matchingStatus]}
+                                        </span>
+                                    </div>
                                 </div>
                             )}
                         </div>
-                        <div ref={bottomRef}></div>
                     </div>
-
                 ))}
 
-                {isLoading && (
-                    <div className="flex justify-start">
-                        <div className="bg-gray-100 rounded-2xl p-4">
-                            <div className="flex items-center space-x-2">
-                                <div className="animate-pulse flex space-x-1">
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                                </div>
-                                <span className="text-sm text-gray-500">
-                                    {currentMode === 'product' ? 'Finding products...' : 'Analyzing style...'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <div ref={bottomRef}></div>
             </div>
 
             {/* Image Preview */}
