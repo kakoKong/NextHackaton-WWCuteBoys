@@ -198,23 +198,43 @@ async def style_complement(request: StyleComplementRequest):
     try:
         
         # Generate multiple queries using Bedrock
+        # messages = [
+        #     {
+        #         "role": "system", 
+        #         "content": (
+        #             "You are a fashion recommendation assistant. Based on the image, assume the user already owns the outfit shown. "
+        #             "Your goal is to suggest what the user might want next to complete, complement, or contrast with the look. "
+        #             "This includes suggestions for shoes, bags, accessories, layering options, casual variations, or ways to remix items. "
+        #             "Avoid repeating or rephrasing what they are already wearing (e.g. gray suit or red tie). "
+        #             "Return only a short list (5–7 max) of helpful search queries in this format: a JSON array of strings."
+        #         )
+        #     },
+        #     {
+        #         "role": "user", 
+        #         "content": (
+        #             f"User query: {request.user_query}. "
+        #             f"Image context: {request.image_prompt}. "
+        #             f"Return a list of search queries the user might want next — not descriptions."
+        #         )
+        #     }
+        # ]
         messages = [
             {
                 "role": "system", 
                 "content": (
-                    "You are a fashion recommendation assistant. Based on the image, assume the user already owns the outfit shown. "
-                    "Your goal is to suggest what the user might want next to complete, complement, or contrast with the look. "
-                    "This includes suggestions for shoes, bags, accessories, layering options, casual variations, or ways to remix items. "
-                    "Avoid repeating or rephrasing what they are already wearing (e.g. gray suit or red tie). "
-                    "Return only a short list (5–7 max) of helpful search queries in this format: a JSON array of strings."
+                    "You are a fashion recommendation assistant. Based on the image, assume the user already owns the fashion item shown. "
+                    "Your task is to suggest only search queries for **complementary fashion pieces**, based on the user's query and the item shown. "
+                    "Do NOT suggest or repeat the item the user already owns (e.g., if the user is wearing trousers, do not suggest trousers). "
+                    "Focus on fashion pieces that complete, contrast, or style well with the current look — such as tops, shoes, accessories, or layering pieces. "
+                    "Return only a short JSON array (5–7 items max) of **search queries**. No explanations or formatting — just the array of strings."
                 )
             },
             {
                 "role": "user", 
                 "content": (
-                    f"User query: {request.user_query}. "
-                    f"Image context: {request.image_prompt}. "
-                    f"Return a list of search queries the user might want next — not descriptions."
+                    "User query: I want something that goes well with this item. "
+                    "Image context: [Describe the item the user is wearing in natural language, e.g., 'a pair of patterned Thai trousers', 'a floral summer dress', etc.]. "
+                    "Return a list of helpful and relevant search queries."
                 )
             }
         ]

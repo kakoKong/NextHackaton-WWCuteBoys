@@ -74,3 +74,9 @@ def ingestion_data_opensearch(index_name, dataframe, client):
             "vector_en": embedding 
         })
 
+if __name__ == "__main__":
+    df = pd.read_csv("data.csv")
+    index_name = "product-index"
+    client = get_client()
+    creating_index_body(index_name, client)
+    ingestion_data_opensearch(index_name, df, client)
