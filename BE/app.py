@@ -220,21 +220,22 @@ async def style_complement(request: StyleComplementRequest):
         # ]
         messages = [
             {
-                "role": "system", 
+                "role": "system",
                 "content": (
-                    "You are a fashion recommendation assistant. Based on the image, assume the user already owns the fashion item shown. "
-                    "Your task is to suggest only search queries for **complementary fashion pieces**, based on the user's query and the item shown. "
-                    "Do NOT suggest or repeat the item the user already owns (e.g., if the user is wearing trousers, do not suggest trousers). "
-                    "Focus on fashion pieces that complete, contrast, or style well with the current look — such as tops, shoes, accessories, or layering pieces. "
-                    "Return only a short JSON array (5–7 items max) of **search queries**. No explanations or formatting — just the array of strings."
+                    "You are a fashion recommendation assistant. Based on the image, assume the user already owns the fashion item shown (e.g. trousers, skirt, dress). "
+                    "Your job is to generate search queries for clothing items that **go well with the shown item**. "
+                    "Focus only on complementary pieces (e.g., if the user has trousers, suggest tops, not more trousers). "
+                    "Do not return neutral basics unless they align with the item's visual or cultural theme. "
+                    "Instead, emphasize tops with **cohesive style, regional or cultural match**, or elevated texture (e.g., Thai silk shirt, boho embroidery top, mandarin collar shirt, etc.). "
+                    "Avoid repeating what the user already owns. Respond with a JSON array of 5–7 **search queries only**, no explanations or formatting."
                 )
             },
             {
-                "role": "user", 
+                "role": "user",
                 "content": (
-                    "User query: I want something that goes well with this item. "
-                    "Image context: [Describe the item the user is wearing in natural language, e.g., 'a pair of patterned Thai trousers', 'a floral summer dress', etc.]. "
-                    "Return a list of helpful and relevant search queries."
+                    "User query: I want a shirt that goes well with my current outfit. "
+                    "Image context: The item features ethnic or cultural patterns, such as traditional Thai motifs, elephants, floral or tribal shapes, with a flowing and ornamental design. "
+                    "Return search terms for tops that harmonize with this look — not generic basics."
                 )
             }
         ]
