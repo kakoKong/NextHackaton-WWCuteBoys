@@ -20,13 +20,13 @@ def main(caption_payload, user_messages, features):
         style_matching(caption_payload, user_messages)
     
 if __name__ == "__main__":
-    features = "style_matching"
+    features = "style_matching"  # Change to "product_matching" for product matching
     caption_payload = {
         "image_path": ""
     }
     user_messages = {
             "messages": [
-                {"role": "user", "content": "I am going to my friend's wedding at a beach side. I wonder what I should"},
+                {"role": "user", "content": "Can you help me find shirt that fit with navy shorts?"},
             ]
         }
     main(caption_payload, user_messages, features=features)
