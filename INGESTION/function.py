@@ -207,7 +207,7 @@ if __name__ == "__main__":
     # Example DataFrame for testing
     #df = pd.read_csv("../data.csv")
     #ingestion_data_opensearch(index_name, df)
-    results = semantic_search("great productThe image shows a woman wearing a gray button-down dress or shirtdress. The dress has long sleeves and a collar, and is cinched at the waist with a belt. The woman is standing in what appears to be an office or workspace setting, with shelves or cabinets visible in the background. The overall style of the dress and setting suggests a professional or formal work environment.", top_k=3, index_name=index_name)
+    results = semantic_search("The image shows a woman wearing a gray button-down dress or shirtdress. The dress has long sleeves and a collar, and is cinched at the waist with a belt. The woman is standing in what appears to be an office or workspace setting, with shelves or cabinets visible in the background. The overall style of the dress and setting suggests a professional or formal work environment.", top_k=3, index_name=index_name)
     print("Search Results:")
     for i in range(1, len(results[0]) + 1):
         print(f"Input {i}")
