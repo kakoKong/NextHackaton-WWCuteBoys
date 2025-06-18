@@ -17,128 +17,20 @@ interface Message {
     recommendedProducts?: Product[];
 }
 
-// Convert your CSV data to products
-const csvProducts: Product[] = [
-    {
-        id: '1',
-        name: 'Zara Sequin Maxi Skirt',
-        description: 'This captivating black sequin maxi skirt is designed to shimmer and reflect light with every step, creating a dynamic and luxurious visual effect.',
-        price: 129.90,
-        imageUrl: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400&h=600&fit=crop',
-        category: 'Clothing'
-    },
-    {
-        id: '2',
-        name: 'Korean V-Neck Blouse',
-        description: 'This charming light pink blouse features a gentle V-neckline adorned with subtle, color-matched buttons running down the front.',
-        price: 49.90,
-        imageUrl: 'https://images.unsplash.com/photo-1564257577-6a4b7197a74e?w=400&h=600&fit=crop',
-        category: 'Clothing'
-    },
-    {
-        id: '3',
-        name: 'Pink Corduroy Jacket',
-        description: 'This stylish pink corduroy jacket reinterprets the classic trucker jacket design with a delightful pastel hue.',
-        price: 89.90,
-        imageUrl: 'https://images.unsplash.com/photo-1551698618-04cedc5c1b3c?w=400&h=600&fit=crop',
-        category: 'Clothing'
-    },
-    // Additional mock products for demonstration
-    {
-        id: '4',
-        name: 'Vintage Denim Jacket',
-        description: 'Classic vintage-style denim jacket with distressed details and comfortable fit.',
-        price: 79.90,
-        imageUrl: 'https://images.unsplash.com/photo-1544966503-7cc5ac882d5f?w=400&h=600&fit=crop',
-        category: 'Clothing'
-    },
-    {
-        id: '5',
-        name: 'Floral Summer Dress',
-        description: 'Light and airy floral dress perfect for summer occasions.',
-        price: 69.90,
-        imageUrl: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400&h=600&fit=crop',
-        category: 'Clothing'
-    },
-    {
-        id: '6',
-        name: 'Striped Casual Shirt',
-        description: 'Comfortable striped shirt with modern fit and breathable fabric.',
-        price: 39.90,
-        imageUrl: 'https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=400&h=600&fit=crop',
-        category: 'Clothing'
-    }
-];
-
 // AI simulation functions for the plugin
 const callProductMatchingAPI = async (query: string, imageFile?: File): Promise<Product[]> => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Simulate product matching logic - focus on functionality and category
-    let results = [...csvProducts];
-
-    if (query.toLowerCase().includes('sequin') || query.toLowerCase().includes('glamorous')) {
-        results = results.filter(p => p.name.toLowerCase().includes('sequin'));
-    } else if (query.toLowerCase().includes('pink') || query.toLowerCase().includes('feminine')) {
-        results = results.filter(p =>
-            p.name.toLowerCase().includes('pink') ||
-            p.description.toLowerCase().includes('pink') ||
-            p.name.toLowerCase().includes('korean')
-        );
-    } else if (query.toLowerCase().includes('jacket') || query.toLowerCase().includes('casual')) {
-        results = results.filter(p => p.name.toLowerCase().includes('jacket'));
-    } else if (query.toLowerCase().includes('dress') || query.toLowerCase().includes('summer')) {
-        results = results.filter(p => p.name.toLowerCase().includes('dress'));
-    } else if (query.toLowerCase().includes('shirt') || query.toLowerCase().includes('blouse')) {
-        results = results.filter(p =>
-            p.name.toLowerCase().includes('shirt') ||
-            p.name.toLowerCase().includes('blouse')
-        );
-    } else {
-        // For general queries, return a random selection
-        const shuffled = [...results].sort(() => 0.5 - Math.random());
-        results = shuffled.slice(0, 3);
-    }
-
-    return results.slice(0, 4);
+    return []
 };
 
 const callStyleMatchingAPI = async (query: string, imageFile?: File): Promise<Product[]> => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1200));
 
-    // Simulate style matching logic - focus on aesthetics and style
-    let results = [...csvProducts];
-
-    if (query.toLowerCase().includes('feminine') || query.toLowerCase().includes('cute')) {
-        results = results.filter(p =>
-            p.name.toLowerCase().includes('korean') ||
-            p.name.toLowerCase().includes('pink') ||
-            p.description.toLowerCase().includes('feminine')
-        );
-    } else if (query.toLowerCase().includes('elegant') || query.toLowerCase().includes('glamorous')) {
-        results = results.filter(p =>
-            p.name.toLowerCase().includes('sequin') ||
-            p.description.toLowerCase().includes('elegant')
-        );
-    } else if (query.toLowerCase().includes('casual') || query.toLowerCase().includes('comfortable')) {
-        results = results.filter(p =>
-            p.name.toLowerCase().includes('jacket') ||
-            p.description.toLowerCase().includes('casual')
-        );
-    } else if (query.toLowerCase().includes('vintage') || query.toLowerCase().includes('retro')) {
-        results = results.filter(p =>
-            p.name.toLowerCase().includes('corduroy') ||
-            p.description.toLowerCase().includes('vintage')
-        );
-    } else {
-        // Return a diverse style mix
-        const shuffled = [...results].sort(() => 0.5 - Math.random());
-        results = shuffled.slice(0, 3);
-    }
-
-    return results.slice(0, 4);
+    return []
 };
 
 // AI Product Plugin Component
@@ -247,6 +139,9 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
         <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
             {/* Header with Mode Toggle */}
             <div className={`bg-gradient-to-r ${config.gradient} p-4`}>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-200 bg-clip-text text-transparent mb-3">
+                    Vibey.AI
+                </h2>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                         <div className="p-2 bg-white/20 rounded-full">
@@ -260,7 +155,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
 
                     <button
                         onClick={toggleMode}
-                        className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 rounded-full px-3 py-2 transition-colors"
+                        className="cursor-pointer flex items-center space-x-2 bg-white/20 hover:bg-white/30 rounded-full px-3 py-2 transition-colors"
                     >
                         {currentMode === 'product' ? (
                             <>

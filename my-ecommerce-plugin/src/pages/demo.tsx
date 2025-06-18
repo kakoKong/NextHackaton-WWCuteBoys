@@ -43,7 +43,7 @@ export default function EcommerceDemo() {
               name: row.name,
               description: row.description,
               price: row.price,
-              imageUrl: `${S3_BASE_URL}/${row.imageUrl}`,
+              imageUrl: `assets/${row.imageUrl}`,
               category: row.category || 'General'
             }));
             setAllProducts(parsedProducts);
@@ -272,9 +272,10 @@ export default function EcommerceDemo() {
             </div>
           </div>
 
-          {/* AI Chat - Takes up 1 column */}
           <div className="lg:col-span-1">
-            <ProductPlugin onRecommendation={handleRecommendation} />
+            <div className="sticky top-24">
+              <ProductPlugin onRecommendation={handleRecommendation} />
+            </div>
           </div>
         </div>
       </div>
