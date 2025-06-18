@@ -390,7 +390,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
                 <div className="p-3 border-t border-gray-200 bg-gray-50">
                     <div className="flex items-center space-x-3">
                         <img src={imagePreview} alt="Preview" className="w-12 h-12 rounded-lg object-cover" />
-                        <span className="text-sm text-gray-600 flex-1">Image ready to send</span>
+                        <span className="text-sm text-gray-600 flex-1">Don't forgot to input some text</span>
                         <button
                             onClick={() => { setSelectedImage(null); setImagePreview(null); }}
                             className="p-1 text-gray-400 hover:text-red-500 transition-colors"
@@ -430,7 +430,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
 
                     <button
                         onClick={handleSendMessage}
-                        disabled={(!inputText.trim() && !selectedImage) || isLoading}
+                        disabled={!inputText.trim() || isLoading}
                         className={`p-3 bg-gradient-to-r ${config.gradient} text-white rounded-full hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all`}
                     >
                         <Send className="w-5 h-5" />
