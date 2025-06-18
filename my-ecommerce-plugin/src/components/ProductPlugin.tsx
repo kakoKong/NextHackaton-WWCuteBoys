@@ -5,7 +5,7 @@ interface Product {
     id: string;
     name: string;
     description: string;
-    price: number;
+    price: string;
     imageUrl: string;
     category?: string;
 }
@@ -17,16 +17,139 @@ interface Message {
     recommendedProducts?: Product[];
 }
 
-// AI simulation functions for the plugin
-const callProductMatchingAPI = async (query: string, imageFile?: File): Promise<Product[]> => {
-    // Simulate API delay
-    if (imageFile){
-        // Store image to s3, and then return s3 url
-    }
-    await new Promise(resolve => setTimeout(resolve, 1000));
+interface AIResponse {
+    genJson: any;
+    reference: Product[];
+}
 
-    // Simulate product matching logic - focus on functionality and category
-    return []
+interface RawResult {
+    search_term: string;
+    search_results: {
+        score: number;
+        id: string;
+        name: string;
+        description: string;
+        price: string;
+    }[];
+}
+
+function flattenSearchResults(results: RawResult[]): Product[] {
+    const allProducts: Product[] = [];
+
+    results.forEach((entry) => {
+        const category = entry.search_term || "General";
+
+        entry.search_results.forEach((item, index) => {
+            const fileNameWithoutExt = item.id.replace(/\.[^/.]+$/, ".png"); // remove .jpg/.png/.webp
+
+            allProducts.push({
+                id: `${fileNameWithoutExt}-${index}`,
+                name: item.name,
+                description: item.description,
+                price: item.price,
+                imageUrl: `assets/${fileNameWithoutExt}`,  // no .jpg extension here
+                category: category,
+            });
+        });
+    });
+
+    return allProducts;
+}
+
+
+// AI simulation functions for the plugin
+export const callProductMatchingAPI = async (query: string, imageFile?: File): Promise<AIResponse> => {
+    const baseUrl = "http://localhost:8001";
+
+    try {
+        let imagePrompt = "";
+
+        if (imageFile) {
+            // 1. Upload image to S3 via presigned URL
+            console.log('gt image')
+            const s3Key = await uploadImageToS3(imageFile, baseUrl);
+
+            // 2. Get image caption using S3 key
+            const captionPayload = {
+                image_path: s3Key  // This matches your existing ImageCaptioningRequest
+            };
+
+            const captionRes = await fetch(`${baseUrl}/image_captioning`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(captionPayload)
+            });
+
+            const captionJson = await captionRes.json();
+            imagePrompt = captionJson.results;
+        }
+
+        // Rest of your code remains exactly the same...
+        const findingPayload = {
+            user_query: query,
+            image_prompt: imagePrompt
+        };
+
+        const findRes = await fetch(`${baseUrl}/finding_documents`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(findingPayload)
+        });
+
+        const findJson = await findRes.json();
+        const reference = findJson.results;
+
+        const genPayload = {
+            question: `${query}`,
+            reference: JSON.stringify(reference)
+        };
+
+        console.log(genPayload)
+        const genRes = await fetch(`${baseUrl}/generation`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(genPayload)
+        });
+
+        const genJson = await genRes.json();
+        return { genJson: genJson ?? '', reference: flattenSearchResults(reference) ?? [] };
+    } catch (err) {
+        console.error("API error", err);
+        throw err;
+    }
+};
+
+// Helper function for S3 upload
+const uploadImageToS3 = async (file: File, baseUrl: string): Promise<string> => {
+    // Get presigned URL from your backend
+    const presignedRes = await fetch(`${baseUrl}/get-presigned-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            fileName: file.name,
+            fileType: file.type
+        })
+    });
+
+    if (!presignedRes.ok) {
+        throw new Error('Failed to get presigned URL');
+    }
+    console.log("yess")
+    const { uploadURL, key } = await presignedRes.json();
+
+    // Upload directly to S3
+    const uploadRes = await fetch(uploadURL, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type }
+    });
+
+
+    if (!uploadRes.ok) {
+        throw new Error('Failed to upload to S3');
+    }
+
+    return key; // Return S3 key for your backend to use
 };
 
 const callStyleMatchingAPI = async (query: string, imageFile?: File): Promise<Product[]> => {
@@ -75,18 +198,22 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
         const safeImageFile = imageFile ?? undefined;
         try {
             let recommendations: Product[];
-
+            let botresponse = ''
             if (currentMode === 'product') {
-                recommendations = await callProductMatchingAPI(queryText, safeImageFile);
+                const { genJson, reference } = await callProductMatchingAPI(queryText, safeImageFile);
+                recommendations = reference;
+                botresponse = genJson.response
+                console.log(genJson);
             } else {
+
                 recommendations = await callStyleMatchingAPI(queryText, safeImageFile);
             }
 
             const botMessage: Message = {
                 type: 'bot',
                 content: currentMode === 'product'
-                    ? `Found ${recommendations.length} products matching your requirements:`
-                    : `Found ${recommendations.length} items with similar style aesthetics:`,
+                    ? `${botresponse ?? 'Here are some matches we found for you:'}\n\nFound ${recommendations.length} products matching your requirements.`
+                    : `Found ${recommendations.length} items with similar style aesthetics.`,
                 recommendedProducts: recommendations,
             };
 
@@ -220,7 +347,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
                                                 className="w-full h-20 object-cover rounded-lg mb-2"
                                             />
                                             <p className="font-medium text-gray-900 text-xs truncate">{product.name}</p>
-                                            <p className="text-sm font-bold text-indigo-600">${product.price}</p>
+                                            <p className="text-sm font-bold text-indigo-600">{product.price}</p>
                                         </div>
                                     ))}
                                 </div>

@@ -7,7 +7,7 @@ interface Product {
   id: string;
   name: string;
   description: string;
-  price: number;
+  price: string;
   imageUrl: string;
   rating?: number;
   category?: string;
@@ -215,7 +215,7 @@ export default function EcommerceDemo() {
 
                         <div className="flex items-center justify-between">
                           <span className="text-2xl font-bold text-purple-600">
-                            ${product.price}
+                            {product.price}
                           </span>
                           <button
                             onClick={() => addToCart(product)}
