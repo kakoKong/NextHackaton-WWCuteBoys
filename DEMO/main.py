@@ -11,28 +11,23 @@ def main(caption_payload, user_messages, features):
         user_messages: User messages for context
         features: List of features to determine which matching to perform
     """
-    if "product_matching" in features:
+    if features == "product_matching":
         print("Performing product matching...")
         product_matching(caption_payload, user_messages)
     
-    if "style_matching" in features:
+    elif features == "style_matching":
         print("Performing style matching...")
         style_matching(caption_payload, user_messages)
     
 if __name__ == "__main__":
+    features = "style_matching"
     caption_payload = {
-        "image_path": "Data/Image12.png"
+        "image_path": ""
     }
     user_messages = {
             "messages": [
-                {"role": "user", "content": "Hey, I'm shopping on Vibe and looking for outfits for summer."},
-                {"role": "assistant", "content": "Sure! Do you have a specific style or occasion in mind?"},
-                {"role": "user", "content": "Yes, I'm going to a beach party and I want something casual but cute."},
-                {"role": "assistant", "content": "We have floral maxi dresses and off-shoulder sundresses perfect for the beach."},
-                {"role": "user", "content": "Okay, I also want something for a formal dinner."},
-                {"role": "assistant", "content": "Great! Our satin slip dresses and belted midi dresses would be ideal."},
-                {"role": "user", "content": "I want the following items"}
+                {"role": "user", "content": "I am going to my friend's wedding at a beach side. I wonder what I should"},
             ]
         }
-    main(caption_payload, user_messages, features=["product_matching"])
+    main(caption_payload, user_messages, features=features)
     
