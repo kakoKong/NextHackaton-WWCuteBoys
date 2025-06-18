@@ -5,7 +5,7 @@ import json
 import time
 import logging
 
-from function import chat_with_bedrock, image_to_text, download_file_from_s3, convert_pydantic_to_bedrock_tool, function_calling_with_bedrock, semantic_search, get_opensearch_client
+from function import chat_with_bedrock, image_to_text, download_file_from_s3, convert_pydantic_to_bedrock_tool, function_calling_with_bedrock, semantic_search, get_opensearch_client, invoke_bedrock_model_stream,get_bedrock_client
 from prompt_template import prompt_multi_query
 
 # Configure logging
@@ -69,6 +69,7 @@ class GenerationResponse(BaseModel):
 
 import asyncio
 client = get_opensearch_client()
+bedrock_client = get_bedrock_client()
 @app.post("/finding_documents", response_model=FindingDocumentsResponse)
 async def finding_documents(request: FindingDocumentsRequest):
     try:
@@ -181,8 +182,24 @@ async def generation(request: GenerationRequest):
             response_text = "Hello, I am a Customer Service Assistant. Please provide a query with relevant product context."
         else:
             messages = [
-                {"role": "system", "content": "You are a helpful customer service assistant."},
-                {"role": "user", "content": f"Based on this product information: {request.reference}\n\nQuestion: {request.question}. Only use the provided product information to answer the question. If the information is not sufficient, say 'I don't know'."}
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a helpful customer service assistant. Answer the user's question based only on the provided product information. "
+                        "Recommend general dress styles that might suit the user's need, without mentioning specific product names. "
+                        "Keep your tone warm and human-like, and avoid bullet points or numbered lists. "
+                        "Suggest the user explore the search results for specific items. "
+                        "If there isn’t enough information to answer, say 'I don't know.'"
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Based on this product information: {request.reference}\n\n"
+                        f"And this question: {request.question}\n\n"
+                        f"Please give a short, natural-sounding response following the instructions."
+                    )
+                }
             ]
             
             response = await chat_with_bedrock(messages)
@@ -193,6 +210,29 @@ async def generation(request: GenerationRequest):
     except Exception as e:
         logger.error(f"Error in generation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+# @app.post("/generation_stream", response_model=GenerationResponse)
+# async def generation(request: GenerationRequest):
+#     try:
+#         # if not request.reference:
+#         #     response_text = "Hello, I am a Customer Service Assistant. Please provide a query with relevant product context."
+#         # else:
+#         #     messages = [
+#         #         {"role": "system", "content": "You are a helpful customer service assistant."},
+#         #         {"role": "user", "content": f"Based on this product information: {request.reference}\n\nQuestion: {request.question}. Only use the provided product information to answer the question. If the information is not sufficient, say 'I don't know'."}
+#         #     ]
+            
+#         #     response = await chat_with_bedrock(messages)
+#         #     response_text = response["choices"][0]["message"]["content"]
+        
+#         invoke_bedrock_model_stream(bedrock_client, "", prompt, max_tokens=2000, temperature=0, top_p=0.9)
+        
+#         return GenerationResponse(response=response_text)
+        
+#     except Exception as e:
+#         logger.error(f"Error in generation: {e}")
+#         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 async def health_check():

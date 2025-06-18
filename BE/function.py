@@ -9,6 +9,7 @@ import json
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from opensearchpy import OpenSearch
+import sys
 
 class ProductSearch(BaseModel):
     response: List[str] = Field(description="List of simple product search queries")
@@ -105,6 +106,35 @@ def get_opensearch_client():
     ssl_show_warn=False,
     )
     return client
+
+
+def invoke_bedrock_model_stream(client, id, prompt, max_tokens=2000, temperature=0, top_p=0.9):
+    response = ""
+    response = client.converse_stream(
+        modelId=id,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "text": prompt
+                    }
+                ]
+            }
+        ],
+        inferenceConfig={
+            "temperature": temperature,
+            "maxTokens": max_tokens,
+            "topP": top_p
+        }
+    )
+    # Extract and print the response text in real-time.
+    for event in response['stream']:
+        if 'contentBlockDelta' in event:
+            chunk = event['contentBlockDelta']
+            sys.stdout.write(chunk['delta']['text'])
+            sys.stdout.flush()
+    return
 
 
 # Initialize client
