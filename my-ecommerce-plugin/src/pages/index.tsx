@@ -231,15 +231,16 @@ export default function ModernLandingPage() {
           </div>
 
           <div className="relative max-w-5xl mx-auto">
-            <div className="bg-gradient-to-r from-blue-600/20 to-gray-600/20 rounded-3xl p-8 backdrop-blur-lg border border-white/10">
-              <div className="aspect-video bg-black/50 rounded-2xl flex items-center justify-center group cursor-pointer hover:bg-black/30 transition-all">
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-gray-600 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                    <Play className="w-8 h-8 text-white ml-1" />
-                  </div>
-                  <p className="text-xl font-semibold text-gray-300">Watch Demo Video</p>
-                  <p className="text-gray-400 mt-2">See AI recommendations in action</p>
-                </div>
+            <div className="bg-gradient-to-r from-blue-600/20 to-gray-600/20 rounded-3xl p-4 sm:p-8 backdrop-blur-lg border border-white/10">
+              <div className="aspect-video rounded-2xl overflow-hidden">
+                <iframe
+                  className="w-full h-full"
+                  src="https://youtu.be/lxaSaxQhsJ8"
+                  title="VibeShopping.AI Demo"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
               </div>
             </div>
           </div>
