@@ -89,6 +89,10 @@ class PresignedUrlResponse(BaseModel):
     uploadURL: str
     key: str
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
 # Add this new endpoint
 @app.post("/get-presigned-url", response_model=PresignedUrlResponse)
 async def get_presigned_url(request: PresignedUrlRequest):
