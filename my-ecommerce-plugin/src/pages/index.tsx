@@ -235,7 +235,7 @@ export default function ModernLandingPage() {
               <div className="aspect-video rounded-2xl overflow-hidden">
                 <iframe
                   className="w-full h-full"
-                  src="https://youtu.be/lxaSaxQhsJ8"
+                  src="https://www.youtube.com/embed/lxaSaxQhsJ8?si=RygqX8Bk6Kpn0lQo"
                   title="VibeShopping.AI Demo"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
