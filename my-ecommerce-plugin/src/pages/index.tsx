@@ -56,7 +56,7 @@ export default function ModernLandingPage() {
       avatar: "/assets/Kong.png"
     },
     {
-      name: "Kandanai Leenutapong",
+      name: "Kandanai Leenutaphong",
       role: "Mew",
       content: "@warwick_cuteboy_thailand",
       rating: 5,
