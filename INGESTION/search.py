@@ -22,17 +22,18 @@ def fuzzy_search(index_name, search_term,client):
         print(f"Price: {hit['_source']['price']}")
         print("---")
 
-def semantic_search(search_term, client,top_k=3,index_name="product-index"):
+def semantic_search(search_term, client, top_k=3, index_name="product-index"):
     """
     Perform a semantic search on the specified OpenSearch index using the given search term.
 
     Args:
     search_term (str): The search term for the semantic search.
+    client: The OpenSearch client.
     top_k (int, optional): The number of documents to retrieve from the OpenSearch database
     index_name (str, optional): The name of the OpenSearch index to search.
     
     Returns:
-    dict: A dictionary with product information
+    list: A list of dictionaries, each containing product information
     """
     print("\nSemantic search\n")
     # Semantic search in OpenSearch
@@ -48,24 +49,22 @@ def semantic_search(search_term, client,top_k=3,index_name="product-index"):
         }
     }
 
-    results_names = {}
-    results_descriptions = {}
-    results_prices = {}
-    results_images = {}
-
-    i = 1
+    results = []
     semantic_resp = client.search(index=index_name, body=vector_query)
     
-    for hit in semantic_resp['hits']['hits']:
+    for i, hit in enumerate(semantic_resp['hits']['hits'], 1):
         print("CURRENT SCORE: ", hit['_score'])
         if hit['_score'] > 0:  # You can adjust this threshold as needed
-            results_names[f"product{i}"] = hit['_source']['name']
-            results_descriptions[f"description{i}"] = hit['_source']['description']
-            results_prices[f"price{i}"] = hit['_source']['price']
-            results_images[f"image{i}"] = hit['_source']['imageUrl']
-            i += 1
+            product = {
+                'score': hit['_score'],
+                'id': hit["_source"]["imageUrl"],
+                'name': hit['_source']['name'],
+                'description': hit['_source']['description'],
+                'price': hit['_source']['price'],
+            }
+            results.append(product)
 
-    return [results_names, results_descriptions, results_prices, results_images]
+    return results
 
 if __name__ == "__main__":
     client = get_client()
@@ -73,14 +72,4 @@ if __name__ == "__main__":
     
     search_term =  "The image shows a woman wearing a gray button-down dress or shirtdress. The dress has long sleeves and a collar, and is cinched at the waist with a belt. The woman is standing in what appears to be an office or workspace setting, with shelves or cabinets visible in the background. The overall style of the dress and setting suggests a professional or formal work environment."
     results = semantic_search(search_term, client, top_k=3, index_name=index_name)
-    print("Search Results:")
-    for i in range(1, len(results[0]) + 1):
-        print(f"Input {i}")
-        print(f"Product {i}: {results[0][f'product{i}']}")
-        print(f"Description {i}: {results[1][f'description{i}']}")
-        print(f"Price {i}: {results[2][f'price{i}']}")
-        print(f"Image {i}: {results[3][f'image{i}']}")
-        print("---")
-        
-     
-    
+    print(results) 
