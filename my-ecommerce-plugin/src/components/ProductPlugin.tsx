@@ -1,5 +1,6 @@
 import { Search, ShoppingCart, Heart, Star, Send, Upload, X, Sparkles, Package, Palette, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useRef } from 'react';
 
 interface Product {
     id: string;
@@ -228,10 +229,12 @@ const callStyleMatchingAPI = async (query: string, imageFile?: File): Promise<{ 
 
 // AI Product Plugin Component
 export default function ProductPlugin({ onRecommendation }: { onRecommendation: (products: Product[]) => void }) {
+
+    const bottomRef = useRef<HTMLDivElement | null>(null);
     // Separate message states for each mode
     const [productMessages, setProductMessages] = useState<Message[]>([]);
     const [styleMessages, setStyleMessages] = useState<Message[]>([]);
-    
+
     const [inputText, setInputText] = useState('');
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -366,6 +369,11 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
     const config = getModeConfig();
     const IconComponent = config.icon;
     const currentMessages = getCurrentMessages();
+    useEffect(() => {
+        if (bottomRef.current) {
+            bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [currentMessages]);
 
     return (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden transform transition-all duration-500 hover:shadow-xl hover:scale-[1.02]">
@@ -452,7 +460,9 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
                                 </div>
                             )}
                         </div>
+                        <div ref={bottomRef}></div>
                     </div>
+
                 ))}
 
                 {isLoading && (
