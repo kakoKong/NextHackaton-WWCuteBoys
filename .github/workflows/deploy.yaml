@@ -41,5 +41,5 @@ jobs:
 
     - name: Force deploy
       run: |
-        aws ecs update-service --cluster hackathon-demo --service hackathon-demo-backend --force-new-deployment
-        aws ecs update-service --cluster hackathon-demo --service hackathon-demo-frontend --force-new-deployment
+        aws ecs update-service --cluster hackathon-demo --service hackathon-backend-task-service-9w5bzqop --force-new-deployment
+        aws ecs update-service --cluster hackathon-demo --service hackathon-frontend-task-service-uwvv55jf --force-new-deployment
