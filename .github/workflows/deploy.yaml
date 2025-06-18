@@ -1,39 +1,35 @@
-name: Deploy to AWS
+name: Deploy to ECS
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+
+env:
+  AWS_REGION: us-west-2
+  APP_NAME: hackathon-demo  # Use same name as Terraform
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - uses: actions/checkout@v3
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+    - name: Get AWS Account ID
+      run: echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
 
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+    - name: Login to ECR
+      run: aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
-      - name: Build, tag, and push Docker image
-        run: |
-          IMAGE_URI=your_account_id.dkr.ecr.us-east-1.amazonaws.com/vibe-api
-          docker build -t vibe-api .
-          docker tag vibe-api:latest $IMAGE_URI:latest
-          docker push $IMAGE_URI:latest
-
-      - name: Update ECS Service
-        run: |
-          aws ecs update-service \
-            --cluster vibe-cluster \
-            --service vibe-service \
-            --force-new-deployment
+    - name: Build and push images
+      run: |
+        # Backend
+        docker build -t $APP_NAME-backend ./BE
+        docker tag $APP_NAME-backend:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME-backend:latest
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazona
