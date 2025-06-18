@@ -67,6 +67,7 @@ class ImageCaptioningResponse(BaseModel):
 class GenerationResponse(BaseModel):
     response: str
 
+import asyncio
 client = get_opensearch_client()
 @app.post("/finding_documents", response_model=FindingDocumentsResponse)
 async def finding_documents(request: FindingDocumentsRequest):
@@ -95,11 +96,26 @@ async def finding_documents(request: FindingDocumentsRequest):
         response = await function_calling_with_bedrock(messages)
         search_term = response["choices"][0]["message"]["content"]
         
-        print(search_term["response"])
-        final_search = []
-        for term in search_term["response"]:
-            each_term = {"search_term": term, "search_results": semantic_search(term, client, top_k=3)}
-            final_search.append(each_term)
+        if isinstance(search_term, str):
+            search_term = json.loads(search_term)  # list of strings
+
+        # print(search_term)
+        # print(search_term["response"])
+        # for term in search_term["response"]:
+        #     print(term)
+
+        async def search(term):
+            result = await asyncio.to_thread(semantic_search, term, client, top_k=3)
+            return {
+                "search_term": term,
+                "search_results": result
+            }
+
+        final_search = await asyncio.gather(*(search(term) for term in search_term["response"]))
+        # final_search = []
+        # for term in search_term["response"]:
+        #     each_term = {"search_term": term, "search_results": semantic_search(term, client, top_k=3)}
+        #     final_search.append(each_term)
 
         return FindingDocumentsResponse(results=final_search)
         # return FindingDocumentsResponse(results=search_term)
