@@ -407,7 +407,6 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
                     <input
                         type="file"
                         accept="image/*"
-                        capture="environment"  // or "user" for front camera
                         className="hidden"
                         id="image-upload"
                         onChange={handleImageUpload}
