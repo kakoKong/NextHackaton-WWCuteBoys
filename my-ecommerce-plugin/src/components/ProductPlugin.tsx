@@ -52,6 +52,7 @@ const removeDuplicateProducts = (products: Product[]): Product[] => {
 
 // AI Product Plugin Component
 export default function ProductPlugin({ onRecommendation }: { onRecommendation: (products: Product[]) => void }) {
+    const inputRef = useRef<HTMLInputElement | null>(null);
     const bottomRef = useRef<HTMLDivElement | null>(null);
     const [productMessages, setProductMessages] = useState<Message[]>([]);
     const [styleMessages, setStyleMessages] = useState<Message[]>([]);
@@ -108,7 +109,8 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
         const imageFile = selectedImage;
         setSelectedImage(null);
         setImagePreview(null);
-        
+        inputRef.current?.blur();
+
         const safeImageFile = imageFile ?? undefined;
 
         try {
@@ -288,7 +290,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
             </div>
 
             {/* Chat Area */}
-            <div className="h-96 overflow-y-auto p-4 space-y-4">
+            <div className="max-h-[60vh] sm:h-96 overflow-y-auto px-2 py-3 sm:px-4 sm:py-4 space-y-4">
                 {currentMessages.length === 0 && (
                     <div className="text-center text-gray-500 mt-12">
                         <Sparkles className="w-12 h-12 mx-auto mb-4 text-gray-300" />
@@ -418,6 +420,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
                     </label>
 
                     <input
+                        ref={inputRef}
                         type="text"
                         className="flex-1 p-3 border border-gray-300 text-black rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         placeholder={config.placeholder}
