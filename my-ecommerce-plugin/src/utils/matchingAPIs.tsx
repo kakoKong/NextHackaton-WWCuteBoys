@@ -170,7 +170,7 @@ export interface Product {
       const styleJson = await styleRes.json();
       const styleComplementText = styleJson.results;
   
-      const docSearchPayload = { user_query: styleComplementText, image_prompt: imagePrompt };
+      const docSearchPayload = { user_query: styleComplementText, image_prompt: "" };
       const docRes = await fetch(`${baseUrl}/finding_documents`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
