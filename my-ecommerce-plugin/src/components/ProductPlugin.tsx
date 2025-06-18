@@ -108,7 +108,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
         const imageFile = selectedImage;
         setSelectedImage(null);
         setImagePreview(null);
-
+        
         const safeImageFile = imageFile ?? undefined;
 
         try {
@@ -118,7 +118,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
             const onProductsFound = (products: Product[]) => {
                 // Remove duplicates while preserving order
                 const uniqueProducts = removeDuplicateProducts(products);
-                
+
                 const productsMessage: Message = {
                     type: 'bot',
                     content: `Found ${uniqueProducts.length} ${currentMode === 'product' ? 'products matching your requirements' : 'items with similar style aesthetics'}. Generating detailed response...`,
@@ -405,6 +405,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
                     <input
                         type="file"
                         accept="image/*"
+                        capture="environment"  // or "user" for front camera
                         className="hidden"
                         id="image-upload"
                         onChange={handleImageUpload}
