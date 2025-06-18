@@ -80,7 +80,7 @@ export interface Product {
     onProductsFound?: (products: Product[]) => void,
     setStatus?: (status: MatchingStatus) => void
   ): Promise<AIResponse> => {
-    const baseUrl = process.env.BACKEND_ENDPOINT ?? "http://localhost:8001";
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT ?? "http://localhost:8001";
     let imagePrompt = "";
   
     try {
@@ -140,7 +140,7 @@ export interface Product {
     onProductsFound?: (products: Product[]) => void,
     setStatus?: (status: MatchingStatus) => void
   ): Promise<{ recommendations: Product[]; genResponse: string }> => {
-    const baseUrl = process.env.BACKEND_ENDPOINT ?? "http://localhost:8001";
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_ENDPOINT ?? "http://localhost:8001";
     let imagePrompt = "";
   
     try {
