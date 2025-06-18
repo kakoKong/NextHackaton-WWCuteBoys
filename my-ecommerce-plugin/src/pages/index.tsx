@@ -51,21 +51,21 @@ export default function ModernLandingPage() {
     {
       name: "Pattarathon Nopwattanapong",
       role: "Kong",
-      content: "Sawasdee kabbb",
+      content: "Redbull mixed well with jagermeister",
       rating: 5,
       avatar: "/assets/Kong.png"
     },
     {
       name: "Kandanai Leenutapong",
       role: "Mew",
-      content: "Helloooo",
+      content: "@warwick_cuteboy_thailand",
       rating: 5,
       avatar: "/assets/Mew.png"
     },
     {
       name: "Phudish Prateepamornkul",
       role: "Tam",
-      content: "ni hao maaa",
+      content: "Warwick is not the place, it's the people",
       rating: 5,
       avatar: "assets/Tam.png"
     }
