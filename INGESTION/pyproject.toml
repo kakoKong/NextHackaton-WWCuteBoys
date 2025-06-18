@@ -6,8 +6,12 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "boto3>=1.38.37",
+    "fastapi==0.104.1",
+    "ipykernel>=6.29.5",
     "opensearch-py>=3.0.0",
     "pandas>=2.3.0",
+    "pydantic==2.5.0",
     "python-dotenv>=1.1.0",
     "tqdm>=4.67.1",
+    "uvicorn[standard]==0.24.0",
 ]

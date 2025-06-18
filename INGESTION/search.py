@@ -1,4 +1,5 @@
 from util import get_client, get_titan_embedding
+import time 
 
 def fuzzy_search(index_name, search_term,client):
     print("\nFuzzy search\n")
@@ -71,5 +72,8 @@ if __name__ == "__main__":
     index_name = "product-index"
     
     search_term =  "The image shows a woman wearing a gray button-down dress or shirtdress. The dress has long sleeves and a collar, and is cinched at the waist with a belt. The woman is standing in what appears to be an office or workspace setting, with shelves or cabinets visible in the background. The overall style of the dress and setting suggests a professional or formal work environment."
+    start_time = time.time()
     results = semantic_search(search_term, client, top_k=3, index_name=index_name)
+    end_time = time.time()
+    print(f"Search completed in {end_time - start_time:.2f} seconds")
     print(results) 
