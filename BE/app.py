@@ -1,11 +1,17 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware 
 from pydantic import BaseModel
 from typing import List, Optional
+import os
 import json
 import time
 import logging
+import boto3
+from botocore.exceptions import ClientError
+import uuid
+import asyncio
 
-from function import chat_with_bedrock, image_to_text, download_file_from_s3, convert_pydantic_to_bedrock_tool, function_calling_with_bedrock, semantic_search, get_opensearch_client
+from function import chat_with_bedrock, image_to_text, download_file_from_s3, convert_pydantic_to_bedrock_tool, function_calling_with_bedrock, semantic_search, get_opensearch_client, invoke_bedrock_model_stream,get_bedrock_client
 from prompt_template import prompt_multi_query
 
 # Configure logging
@@ -13,6 +19,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Product Search API", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Pydantic models
 class FindingDocumentsRequest(BaseModel):
@@ -67,8 +81,59 @@ class ImageCaptioningResponse(BaseModel):
 class GenerationResponse(BaseModel):
     response: str
 
-import asyncio
+class PresignedUrlRequest(BaseModel):
+    fileName: str
+    fileType: str
+
+class PresignedUrlResponse(BaseModel):
+    uploadURL: str
+    key: str
+
+# Add this new endpoint
+@app.post("/get-presigned-url", response_model=PresignedUrlResponse)
+async def get_presigned_url(request: PresignedUrlRequest):
+    aws_access_key = os.environ.get("AWS_ACCESS_KEY_ID")
+    aws_secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
+    region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+    try:
+        s3_client = boto3.client(
+            "s3",
+            region_name=region,
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_key,
+        )
+
+        # Generate unique key for the file
+        file_extension = request.fileName.split('.')[-1] if '.' in request.fileName else ''
+        unique_key = f"uploads/{uuid.uuid4()}-{request.fileName}"
+        
+        # Generate presigned URL for PUT operation
+        presigned_url = s3_client.generate_presigned_url(
+            'put_object',
+            Params={
+                'Bucket': 'testbucketwwcuteboys',  # Replace with your actual bucket name
+                'Key': unique_key,
+                'ContentType': request.fileType,
+                'ACL': 'private'  # Keep files private
+            },
+            ExpiresIn=300  # URL expires in 5 minutes
+        )
+        print(presigned_url)
+        
+        return PresignedUrlResponse(
+            uploadURL=presigned_url,
+            key=unique_key
+        )
+        
+    except ClientError as e:
+        logger.error(f"Error generating presigned URL: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate upload URL")
+    except Exception as e:
+        logger.error(f"Unexpected error in get_presigned_url: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 client = get_opensearch_client()
+bedrock_client = get_bedrock_client()
 @app.post("/finding_documents", response_model=FindingDocumentsResponse)
 async def finding_documents(request: FindingDocumentsRequest):
     try:
@@ -181,8 +246,24 @@ async def generation(request: GenerationRequest):
             response_text = "Hello, I am a Customer Service Assistant. Please provide a query with relevant product context."
         else:
             messages = [
-                {"role": "system", "content": "You are a helpful customer service assistant."},
-                {"role": "user", "content": f"Based on this product information: {request.reference}\n\nQuestion: {request.question}. Only use the provided product information to answer the question. If the information is not sufficient, say 'I don't know'."}
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a helpful customer service assistant. Answer the user's question based only on the provided product information. "
+                        "Recommend general dress styles that might suit the user's need, without mentioning specific product names. "
+                        "Keep your tone warm and human-like, and avoid bullet points or numbered lists. "
+                        "Suggest the user explore the search results for specific items. "
+                        "If there isn’t enough information to answer, say 'I don't know.'"
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Based on this product information: {request.reference}\n\n"
+                        f"And this question: {request.question}\n\n"
+                        f"Please give a short, natural-sounding response following the instructions."
+                    )
+                }
             ]
             
             response = await chat_with_bedrock(messages)
@@ -193,6 +274,29 @@ async def generation(request: GenerationRequest):
     except Exception as e:
         logger.error(f"Error in generation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+# @app.post("/generation_stream", response_model=GenerationResponse)
+# async def generation(request: GenerationRequest):
+#     try:
+#         # if not request.reference:
+#         #     response_text = "Hello, I am a Customer Service Assistant. Please provide a query with relevant product context."
+#         # else:
+#         #     messages = [
+#         #         {"role": "system", "content": "You are a helpful customer service assistant."},
+#         #         {"role": "user", "content": f"Based on this product information: {request.reference}\n\nQuestion: {request.question}. Only use the provided product information to answer the question. If the information is not sufficient, say 'I don't know'."}
+#         #     ]
+            
+#         #     response = await chat_with_bedrock(messages)
+#         #     response_text = response["choices"][0]["message"]["content"]
+        
+#         invoke_bedrock_model_stream(bedrock_client, "", prompt, max_tokens=2000, temperature=0, top_p=0.9)
+        
+#         return GenerationResponse(response=response_text)
+        
+#     except Exception as e:
+#         logger.error(f"Error in generation: {e}")
+#         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 async def health_check():
