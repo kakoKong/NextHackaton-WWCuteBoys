@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { ShoppingCart, Heart, Star, MessageCircle, X, Sparkles } from 'lucide-react';
 import ProductPlugin from '../components/ProductPlugin';
 import Papa from 'papaparse';
+import Link from 'next/link';
+
 
 interface Product {
   id: string;
@@ -74,24 +76,9 @@ export default function EcommerceDemo() {
               Unibro
             </h1>
           </div>
-          <div className="flex items-center space-x-4">
-            <button className="relative p-2 text-gray-600 hover:text-pink-500 transform hover:scale-110 transition-all duration-200 rounded-full hover:bg-pink-50">
-              <Heart className="w-6 h-6" />
-              {wishlistItems.size > 0 && (
-                <span className="absolute -top-2 -right-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse shadow-lg">
-                  {wishlistItems.size}
-                </span>
-              )}
-            </button>
-            <button className="relative p-2 text-gray-600 hover:text-purple-600 transform hover:scale-110 transition-all duration-200 rounded-full hover:bg-purple-50">
-              <ShoppingCart className="w-6 h-6" />
-              {cartItems > 0 && (
-                <span className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-bounce shadow-lg">
-                  {cartItems}
-                </span>
-              )}
-            </button>
-          </div>
+          <Link href="/" className="text-xs sm:text-sm text-gray-500 font-medium no-underline">
+            Powered by: <span className="text-purple-600 font-semibold">VibeShopping.AI</span>
+          </Link>
         </div>
       </header>
 
@@ -127,8 +114,8 @@ export default function EcommerceDemo() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {displayedProducts.map((product, index) => (
-                <div 
-                  key={product.id} 
+                <div
+                  key={product.id}
                   className="group cursor-pointer transform hover:scale-[1.02] transition-all duration-500"
                   style={{
                     animationDelay: `${index * 100}ms`,
@@ -137,21 +124,20 @@ export default function EcommerceDemo() {
                 >
                   <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl group-hover:shadow-purple-500/20 transition-all duration-500 border border-gray-100 hover:border-purple-200">
                     <div className="aspect-[3/4] relative overflow-hidden">
-                      <img 
-                        src={product.imageUrl} 
-                        alt={product.name} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      <button 
+                      <button
                         onClick={() => toggleWishlist(product.id)}
                         className="absolute top-4 right-4 p-3 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 hover:bg-white"
                       >
-                        <Heart className={`w-5 h-5 transition-colors duration-300 ${
-                          wishlistItems.has(product.id) 
-                            ? 'text-pink-500 fill-current animate-pulse' 
-                            : 'text-gray-400 hover:text-pink-400'
-                        }`} />
+                        <Heart className={`w-5 h-5 transition-colors duration-300 ${wishlistItems.has(product.id)
+                          ? 'text-pink-500 fill-current animate-pulse'
+                          : 'text-gray-400 hover:text-pink-400'
+                          }`} />
                       </button>
                     </div>
                     <div className="p-6">
@@ -183,11 +169,10 @@ export default function EcommerceDemo() {
         {/* Enhanced Floating Assistant Button */}
         <button
           onClick={() => setShowPlugin(prev => !prev)}
-          className={`cursor-pointer fixed bottom-8 right-8 z-50 group transition-all duration-500 transform hover:scale-110 active:scale-95 ${
-            showPlugin 
-              ? 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 shadow-red-500/30' 
-              : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-purple-500/30'
-          } text-white rounded-full shadow-2xl hover:shadow-3xl p-4 backdrop-blur-sm border border-white/20`}
+          className={`cursor-pointer fixed bottom-8 right-8 z-50 group transition-all duration-500 transform hover:scale-110 active:scale-95 ${showPlugin
+            ? 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 shadow-red-500/30'
+            : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-purple-500/30'
+            } text-white rounded-full shadow-2xl hover:shadow-3xl p-4 backdrop-blur-sm border border-white/20`}
         >
           <div className="flex items-center space-x-3">
             <div className={`transform transition-all duration-300 ${showPlugin ? 'rotate-180' : ''}`}>
@@ -201,12 +186,12 @@ export default function EcommerceDemo() {
               {showPlugin ? 'Close AI' : 'VibeShoppingAI'}
             </span>
           </div>
-          
+
           {/* Animated Ring */}
           {!showPlugin && (
             <div className="absolute inset-0 rounded-full border-2 border-white/30 animate-ping"></div>
           )}
-          
+
           {/* Sparkle Effect */}
           <div className="absolute -top-1 -right-1">
             <Sparkles className={`w-4 h-4 text-yellow-300 ${showPlugin ? 'animate-spin' : 'animate-pulse'}`} />
