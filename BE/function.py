@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import json
 from pydantic import BaseModel, Field
 from typing import List, Optional
+from opensearchpy import OpenSearch
 
 class ProductSearch(BaseModel):
     response: List[str] = Field(description="List of simple product search queries")
@@ -32,7 +33,9 @@ def load_env_file():
 load_env_file()
 
 AWS_S3_BUCKET_NAME = os.environ.get("AWS_S3_BUCKET_NAME")
-
+AWS_DEFAULT_REGION = os.environ["AWS_DEFAULT_REGION"]
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 def get_bedrock_client():
     """Initialize Bedrock client with proper error handling"""
     try:
@@ -87,10 +90,28 @@ def get_s3_client():
         logger.error(f"Failed to initialize Bedrock client: {e}")
         return None
 
+def get_opensearch_client():
+    """
+    Function use to create a client for OpenSearch
+    """
+    AWS_OPENSEARCH_ENDPOINT = os.environ["AWS_OPENSEARCH_ENDPOINT"]
+    AWS_OPENSEARCH_USERNAME = os.environ["AWS_OPENSEARCH_USERNAME"]
+    AWS_OPENSEARCH_PASSWORD = os.environ["AWS_OPENSEARCH_PASSWORD"]
+    client = OpenSearch(
+    hosts=[{'host': AWS_OPENSEARCH_ENDPOINT, 'port': 443}],
+    http_auth=(AWS_OPENSEARCH_USERNAME, AWS_OPENSEARCH_PASSWORD),
+    use_ssl=True,
+    verify_certs=True,
+    ssl_show_warn=False,
+    )
+    return client
+
+
 # Initialize client
 bedrock_client = get_bedrock_client()
 s3_client = get_s3_client()
 model_id = os.environ.get('BEDROCK_MODEL_ID', 'anthropic.claude-3-5-haiku-20241022-v1:0')
+client = get_opensearch_client()
 
 def download_file_from_s3(path_to_file_s3: str, download_path: str) -> None:
     # Configurations
@@ -266,47 +287,47 @@ async def image_to_text(model_id,
 
 
 
-def mock_semantic_search(query: str) -> Dict[str, str]:
-    """
-    Mock semantic search - returns fixed product data
-    """
-    # Mock product database
-    mock_products = [
-        {
-            "materials": "100% Cotton",
-            "description": "Classic red summer dress perfect for casual occasions",
-            "brand_name": "The Mall Fashion",
-            "price": "$49.99",
-            "location": "Floor 2, Section A"
-        },
-        {
-            "materials": "Polyester blend",
-            "description": "Blue jeans with comfortable fit and modern styling",
-            "brand_name": "Denim Pro",
-            "price": "$79.99",
-            "location": "Floor 1, Section B"
-        },
-        {
-            "materials": "Leather",
-            "description": "Brown leather shoes suitable for business and casual wear",
-            "brand_name": "Shoe Gallery",
-            "price": "$129.99",
-            "location": "Floor 3, Section C"
-        }
-    ]
+# def mock_semantic_search(query: str) -> Dict[str, str]:
+#     """
+#     Mock semantic search - returns fixed product data
+#     """
+#     # Mock product database
+#     mock_products = [
+#         {
+#             "materials": "100% Cotton",
+#             "description": "Classic red summer dress perfect for casual occasions",
+#             "brand_name": "The Mall Fashion",
+#             "price": "$49.99",
+#             "location": "Floor 2, Section A"
+#         },
+#         {
+#             "materials": "Polyester blend",
+#             "description": "Blue jeans with comfortable fit and modern styling",
+#             "brand_name": "Denim Pro",
+#             "price": "$79.99",
+#             "location": "Floor 1, Section B"
+#         },
+#         {
+#             "materials": "Leather",
+#             "description": "Brown leather shoes suitable for business and casual wear",
+#             "brand_name": "Shoe Gallery",
+#             "price": "$129.99",
+#             "location": "Floor 3, Section C"
+#         }
+#     ]
     
-    # Simple keyword matching for demo
-    query_lower = query.lower()
+#     # Simple keyword matching for demo
+#     query_lower = query.lower()
     
-    if any(word in query_lower for word in ['dress', 'red', 'summer']):
-        return mock_products[0]
-    elif any(word in query_lower for word in ['jeans', 'blue', 'pants']):
-        return mock_products[1]
-    elif any(word in query_lower for word in ['shoes', 'leather', 'brown']):
-        return mock_products[2]
-    else:
-        # Default to first product
-        return mock_products[0]
+#     if any(word in query_lower for word in ['dress', 'red', 'summer']):
+#         return mock_products[0]
+#     elif any(word in query_lower for word in ['jeans', 'blue', 'pants']):
+#         return mock_products[1]
+#     elif any(word in query_lower for word in ['shoes', 'leather', 'brown']):
+#         return mock_products[2]
+#     else:
+#         # Default to first product
+#         return mock_products[0]
 
 from typing import Optional, Type, Dict, Any
 from pydantic import BaseModel
@@ -358,3 +379,162 @@ def convert_pydantic_to_bedrock_tool(
 #         return "Blue jeans hanging on a clothing rack"
 #     else:
 #         return "A product item displayed in a retail environment"
+
+
+
+def creating_index_body(index_name, dimension=1024):
+    # Create index with mapping for embeddings
+    create_index_body = {
+        "settings": {
+            "index": {
+                "knn": True,
+                "analysis": {
+                    "analyzer": {
+                        "analyzer_shingle": {
+                            "tokenizer": "icu_tokenizer",
+                            "filter": [
+                                "filter_shingle"
+                            ]
+                        }
+                    },
+                    "filter": {
+                        "filter_shingle": {
+                            "type": "shingle",
+                            "max_shingle_size": 3,
+                            "min_shingle_size": 2,
+                            "output_unigrams": "true"
+                        }
+                    }
+                }
+            }
+        },  
+        "mappings": {
+            "properties": {
+                "name": {"type": "text"},
+                "description": {"type": "text", "analyzer": "analyzer_shingle"},
+                "price": {"type": "text"},
+                "imageUrl": {"type": "text"},
+                "vector_en": {
+                    "type": "knn_vector",
+                    "dimension": dimension,
+                    "method": {
+                        "name": "hnsw",
+                        "space_type": "cosinesimil"
+                    }
+                }
+            }
+        }
+    }
+    
+    if not client.indices.exists(index=index_name):
+        print(f"Index '{index_name}' does not exist. Creating a new one")
+    else:
+        response = client.indices.delete(index=index_name)
+        print(f"Index '{index_name}' deleted successfully.")
+    client.indices.create(index=index_name, body=create_index_body)
+def get_titan_embedding(text: str) -> list:
+    """Get embeddings with proper error handling"""
+    try:
+        AWS_DEFAULT_REGION = os.environ["AWS_DEFAULT_REGION"]
+        AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+        AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+        bedrock = boto3.client(
+            'bedrock-runtime', 
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            region_name=AWS_DEFAULT_REGION
+        )
+        
+        payload = {"inputText": text}
+        
+        response = bedrock.invoke_model(
+            modelId="amazon.titan-embed-text-v2:0",
+            body=json.dumps(payload),
+            contentType='application/json'
+        )
+        
+        result = json.loads(response['body'].read())
+        
+        if 'embedding' not in result:
+            print(f"No embedding in response: {result}")
+            return None
+            
+        embedding = result['embedding']
+        
+        if not embedding or len(embedding) == 0:
+            print(f"Empty embedding received")
+            return None
+            
+        #print(f"Got embedding with {len(embedding)} dimensions")
+        return embedding
+        
+    except Exception as e:
+        print(f"Error getting embedding: {e}")
+        return None
+
+
+# def fuzzy_search(index_name, search_term):
+#     print("\nFuzzy search\n")
+#     # Fuzzy search
+#     fuzzy_query = {
+#         "query": {
+#             "fuzzy": {
+#                 "description": {  # Changed from en_character to Product Description
+#                     "value": search_term,
+#                     "fuzziness": "AUTO"  # You can adjust the fuzziness level
+#                 }
+#             }
+#         }
+#     }
+
+#     res = client.search(index=index_name, body=fuzzy_query)
+#     print(f"Got {res['hits']['total']['value']} Hits:")
+#     for hit in res['hits']['hits']:
+#         print(f"Product: {hit['_source']['name']}")
+#         print(f"Description: {hit['_source']['description']}")
+#         print(f"Price: {hit['_source']['price']}")
+#         print("---")
+
+def semantic_search(search_term, client, top_k=3, index_name="product-index"):
+    """
+    Perform a semantic search on the specified OpenSearch index using the given search term.
+
+    Args:
+    search_term (str): The search term for the semantic search.
+    client: The OpenSearch client.
+    top_k (int, optional): The number of documents to retrieve from the OpenSearch database
+    index_name (str, optional): The name of the OpenSearch index to search.
+    
+    Returns:
+    list: A list of dictionaries, each containing product information
+    """
+    print("\nSemantic search\n")
+    # Semantic search in OpenSearch
+    vector_query = {
+        "size": top_k,
+        "query": {
+            "knn": {
+                "vector_en": {
+                    "vector": get_titan_embedding(search_term),
+                    "k": top_k
+                }
+            }
+        }
+    }
+
+    results = []
+    semantic_resp = client.search(index=index_name, body=vector_query)
+    
+    for i, hit in enumerate(semantic_resp['hits']['hits'], 1):
+        print("CURRENT SCORE: ", hit['_score'])
+        if hit['_score'] > 0:  # You can adjust this threshold as needed
+            product = {
+                'score': hit['_score'],
+                'id': hit["_source"]["imageUrl"],
+                'name': hit['_source']['name'],
+                'description': hit['_source']['description'],
+                'price': hit['_source']['price'],
+            }
+            results.append(product)
+
+    return results
