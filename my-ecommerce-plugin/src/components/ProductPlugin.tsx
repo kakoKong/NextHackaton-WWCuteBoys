@@ -60,7 +60,7 @@ function flattenSearchResults(results: RawResult[]): Product[] {
 
 // AI simulation functions for the plugin
 export const callProductMatchingAPI = async (query: string, imageFile?: File): Promise<AIResponse> => {
-    const baseUrl = "http://localhost:8001";
+    const baseUrl = process.env.BACKEND_ENDPOINT ?? "http://localhost:8001";
 
     try {
         let imagePrompt = "";
@@ -154,7 +154,7 @@ const uploadImageToS3 = async (file: File, baseUrl: string): Promise<string> => 
 };
 
 const callStyleMatchingAPI = async (query: string, imageFile?: File): Promise<{ recommendations: Product[], genResponse: string }> => {
-    const baseUrl = "http://localhost:8001";
+    const baseUrl = process.env.BACKEND_ENDPOINT ?? "http://localhost:8001";
     let imagePrompt = "";
 
     try {
