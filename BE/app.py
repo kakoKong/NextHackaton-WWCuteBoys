@@ -304,13 +304,35 @@ async def generation(request: GenerationRequest):
 #         #     response = await chat_with_bedrock(messages)
 #         #     response_text = response["choices"][0]["message"]["content"]
         
-#         invoke_bedrock_model_stream(bedrock_client, "", prompt, max_tokens=2000, temperature=0, top_p=0.9)
+#         invoke_bedrock_model_stream(bedrock_client, "anthropic.claude-3-haiku-20240307-v1:0", "hello", max_tokens=2000, temperature=0, top_p=0.9)
         
-#         return GenerationResponse(response=response_text)
+#         return GenerationResponse(response="test")
         
 #     except Exception as e:
 #         logger.error(f"Error in generation: {e}")
 #         raise HTTPException(status_code=500, detail=str(e))
+
+from fastapi.responses import StreamingResponse
+
+@app.post("/generation_stream")
+async def generation_stream(request: GenerationRequest):
+    try:
+        return StreamingResponse(
+            invoke_bedrock_model_stream(
+                client=bedrock_client,
+                # id="anthropic.claude-3-haiku-20240307-v1:0",
+                id="anthropic.claude-3-5-haiku-20241022-v1:0'",
+                prompt=request.question,  # or build full prompt from request.reference
+                reference=request.reference,
+                max_tokens=2000,
+                temperature=0,
+                top_p=0.9
+            ),
+            media_type="text/plain"
+        )
+    except Exception as e:
+        logger.error(f"Error in generation_stream: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 async def health_check():

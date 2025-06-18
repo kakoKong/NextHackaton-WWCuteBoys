@@ -108,16 +108,44 @@ def get_opensearch_client():
     return client
 
 
-def invoke_bedrock_model_stream(client, id, prompt, max_tokens=2000, temperature=0, top_p=0.9):
-    response = ""
+async def invoke_bedrock_model_stream(client, id, prompt, reference, max_tokens=2000, temperature=0, top_p=0.9):
     response = client.converse_stream(
         modelId=id,
+            # {
+            #     "role": "system",
+            #     "content": (
+            #         "You are a helpful customer service assistant. Answer the user's question based only on the provided product information. "
+            #         "Recommend general dress styles that might suit the user's need, without mentioning specific product names. "
+            #         "Keep your tone warm and human-like, and avoid bullet points or numbered lists. "
+            #         "Suggest the user explore the search results for specific items. "
+            #         "If there isn’t enough information to answer, say 'I don't know.'"
+            #     )
+            # },
+
         messages=[
+            # {
+            #     "role": "system",
+            #     "content": [
+            #         {
+            #             "text": (
+            #         "You are a helpful customer service assistant. Answer the user's question based only on the provided product information. "
+            #         "Recommend general dress styles that might suit the user's need, without mentioning specific product names. "
+            #         "Keep your tone warm and human-like, and avoid bullet points or numbered lists. "
+            #         "Suggest the user explore the search results for specific items. "
+            #         "If there isn’t enough information to answer, say 'I don't know.'"
+            #     )
+            #         }
+            #     ]
+            # },
             {
                 "role": "user",
                 "content": [
                     {
-                        "text": prompt
+                        "text": (
+                    f"Based on this product information: {reference}\n\n"
+                    f"And this question: {prompt}\n\n"
+                    f"Please give a short, natural-sounding response following the instructions."
+                )
                     }
                 ]
             }
@@ -128,13 +156,14 @@ def invoke_bedrock_model_stream(client, id, prompt, max_tokens=2000, temperature
             "topP": top_p
         }
     )
-    # Extract and print the response text in real-time.
+
+
+
+    # Yield the text in chunks
     for event in response['stream']:
         if 'contentBlockDelta' in event:
-            chunk = event['contentBlockDelta']
-            sys.stdout.write(chunk['delta']['text'])
-            sys.stdout.flush()
-    return
+            chunk = event['contentBlockDelta']['delta']['text']
+            yield chunk  # 👈 Yield each chunk
 
 
 # Initialize client
