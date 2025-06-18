@@ -117,6 +117,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
                 subtitle: 'Find products by function & category',
                 icon: Package,
                 gradient: 'from-blue-600 to-indigo-600',
+                textgradient: 'from-blue-300 to-indigo-100',
                 placeholder: 'Looking for wireless headphones...',
                 examples: ['electronics', 'clothing', 'home decor', 'accessories']
             };
@@ -126,6 +127,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
                 subtitle: 'Find items by aesthetic & style',
                 icon: Palette,
                 gradient: 'from-purple-600 to-pink-600',
+                textgradient: 'from-purple-300 to-pink-100',
                 placeholder: 'I love minimalist design...',
                 examples: ['minimalist', 'vintage', 'modern', 'casual']
             };
@@ -139,7 +141,7 @@ export default function ProductPlugin({ onRecommendation }: { onRecommendation: 
         <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
             {/* Header with Mode Toggle */}
             <div className={`bg-gradient-to-r ${config.gradient} p-4`}>
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-200 bg-clip-text text-transparent mb-3">
+                <h2 className={`text-2xl font-bold bg-gradient-to-r ${config.textgradient} bg-clip-text text-transparent mb-3`}>
                     Vibey.AI
                 </h2>
                 <div className="flex items-center justify-between">
