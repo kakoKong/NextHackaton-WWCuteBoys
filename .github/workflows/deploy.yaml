@@ -32,4 +32,14 @@ jobs:
         # Backend
         docker build -t $APP_NAME-backend ./BE
         docker tag $APP_NAME-backend:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME-backend:latest
-        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazona
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME-backend:latest
+        
+        # Frontend  
+        docker build -t $APP_NAME-frontend ./my-ecommerce-plugin
+        docker tag $APP_NAME-frontend:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME-frontend:latest
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME-frontend:latest
+
+    - name: Force deploy
+      run: |
+        aws ecs update-service --cluster $APP_NAME --service $APP_NAME-backend --force-new-deployment
+        aws ecs update-service --cluster $APP_NAME --service $APP_NAME-frontend --force-new-deployment
