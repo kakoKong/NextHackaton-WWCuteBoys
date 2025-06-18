@@ -200,7 +200,7 @@ export default function EcommerceDemo() {
 
         {/* Enhanced Plugin Container */}
         {showPlugin && (
-          <div className="fixed bottom-28 z-40 w-[380px] max-w-[calc(100vw-2rem)] animate-slideInUp">
+          <div className="fixed bottom-22 z-40 w-[380px] max-w-[calc(100vw-2rem)] animate-slideInUp">
             <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20 overflow-hidden transform hover:shadow-3xl transition-all duration-500">
               <ProductPlugin onRecommendation={handleRecommendation} />
             </div>
